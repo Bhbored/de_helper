@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/subcategory.dart';
 import 'package:de_helper/test_data/test_categories.dart';
+import 'package:de_helper/pages/Product/product_page.dart';
 
 class SubcategoryCard extends StatelessWidget {
   final SubCategory subcategory;
@@ -85,19 +86,28 @@ class SubcategoryCard extends StatelessWidget {
           onDelete!();
         }
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[800] : Colors.white,
-          borderRadius: BorderRadius.circular(screenWidth * 0.03),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ProductPage(subCategory: subcategory),
             ),
-          ],
-        ),
-        child: ListTile(
+          );
+        },
+        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[800] : Colors.white,
+            borderRadius: BorderRadius.circular(screenWidth * 0.03),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ListTile(
           contentPadding: EdgeInsets.symmetric(
             horizontal: screenWidth * 0.04,
             vertical: screenHeight * 0.01,
@@ -132,6 +142,7 @@ class SubcategoryCard extends StatelessWidget {
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
           ),
+        ),
         ),
       ),
     );
