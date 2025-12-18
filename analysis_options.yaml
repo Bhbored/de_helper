@@ -1,0 +1,15 @@
+include: package:flutter_lints/flutter.yaml
+formatter:
+  trailing_commas: preserve
+linter:
+  rules:
+    avoid_print: false
+
+analyzer:
+  errors:
+    invalid_annotation_target: ignore
+  plugins:
+    - custom_lint
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
