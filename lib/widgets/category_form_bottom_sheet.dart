@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:de_helper/models/category.dart';
 import 'package:de_helper/utility/available_icons.dart';
 
 class CategoryFormBottomSheet extends StatefulWidget {
-  const CategoryFormBottomSheet({super.key});
+  final Category? category;
+
+  const CategoryFormBottomSheet({super.key, this.category});
 
   @override
   State<CategoryFormBottomSheet> createState() =>
@@ -14,6 +17,17 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
   final _nameController = TextEditingController();
   String? _selectedIconKey;
   bool _isDark = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.category != null) {
+      _nameController.text = widget.category!.name;
+      _selectedIconKey = availableIcons.entries
+          .firstWhere((e) => e.value == widget.category!.icon)
+          .key;
+    }
+  }
 
   @override
   void dispose() {
@@ -73,7 +87,7 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
                 ),
               ),
               Text(
-                'Add New Category',
+                widget.category == null ? 'Add New Category' : 'Edit Category',
                 style: TextStyle(
                   fontSize: screenWidth * 0.05,
                   fontWeight: FontWeight.w600,

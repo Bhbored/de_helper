@@ -94,8 +94,104 @@ class _CategoryPageState extends State<CategoryPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => const CategoryFormBottomSheet(),
     ).then((result) {
-      if (result != null && result['name'] != null && result['icon'] != null) {}
+      if (result != null && result['name'] != null && result['icon'] != null) {
+        final newCategory = Category.create(
+          name: result['name'] as String,
+          icon: result['icon'] as IconData,
+        );
+        setState(() {
+          testCategories.add(newCategory);
+          _displayedCategories = testCategories;
+          _sortCategories();
+        });
+      }
     });
+  }
+
+  void _showEditCategoryBottomSheet(Category category) {
+    final categoryToEdit = testCategories.firstWhere(
+      (c) => c.id == category.id,
+      orElse: () => category,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CategoryFormBottomSheet(category: categoryToEdit),
+    ).then((result) {
+      if (result != null && result['name'] != null && result['icon'] != null) {
+        final index = testCategories.indexWhere((c) => c.id == category.id);
+        if (index != -1) {
+          setState(() {
+            testCategories[index] = Category(
+              id: category.id,
+              name: result['name'] as String,
+              icon: result['icon'] as IconData,
+            );
+            final displayedIndex = _displayedCategories.indexWhere(
+              (c) => c.id == category.id,
+            );
+            if (displayedIndex != -1) {
+              _displayedCategories[displayedIndex] = testCategories[index];
+            }
+            _sortCategories();
+          });
+        }
+      }
+    });
+  }
+
+  void _deleteCategory(Category category) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final screenWidth = MediaQuery.of(context).size.width;
+        return AlertDialog(
+          backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+          title: Text(
+            'Delete Category',
+            style: TextStyle(
+              fontSize: screenWidth * 0.045,
+              color: isDark ? Colors.white : Colors.grey[900],
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete "${category.name}"?',
+            style: TextStyle(
+              fontSize: screenWidth * 0.04,
+              color: isDark ? Colors.grey[300] : Colors.grey[700],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  testCategories.removeWhere((c) => c.id == category.id);
+                  _displayedCategories.removeWhere((c) => c.id == category.id);
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -308,6 +404,9 @@ class _CategoryPageState extends State<CategoryPage> {
                             isDark: isDark,
                             screenWidth: screenWidth,
                             screenHeight: screenHeight,
+                            onEdit: () =>
+                                _showEditCategoryBottomSheet(category),
+                            onDelete: () => _deleteCategory(category),
                           ),
                         );
                       },

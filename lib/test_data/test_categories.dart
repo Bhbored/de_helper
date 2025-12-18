@@ -42,7 +42,7 @@ final homeGardenCategory = Category.create(
   icon: Icons.home,
 );
 
-final List<Category> testCategories = [
+List<Category> testCategories = [
   electronicsCategory,
   booksCategory,
   apparelCategory,
