@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:de_helper/models/category.dart';
+import 'package:de_helper/models/subcategory.dart';
+import 'package:de_helper/test_data/test_categories.dart';
 import 'package:de_helper/pages/Product/product_page.dart';
 
-class CategoryCard extends StatelessWidget {
-  final Category category;
+class SubcategoryCard extends StatelessWidget {
+  final SubCategory subcategory;
   final int productCount;
   final bool isDark;
   final double screenWidth;
@@ -11,9 +12,9 @@ class CategoryCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
-  const CategoryCard({
+  const SubcategoryCard({
     super.key,
-    required this.category,
+    required this.subcategory,
     required this.productCount,
     required this.isDark,
     required this.screenWidth,
@@ -22,13 +23,22 @@ class CategoryCard extends StatelessWidget {
     this.onDelete,
   });
 
+  IconData _getCategoryIcon() {
+    final category = testCategories.firstWhere(
+      (c) => c.id == subcategory.categoryId,
+      orElse: () => testCategories.first,
+    );
+    return category.icon;
+  }
+
   @override
   Widget build(BuildContext context) {
     final iconSize = screenWidth * 0.12;
     final iconContainerSize = screenWidth * 0.13;
+    final categoryIcon = _getCategoryIcon();
 
     return Dismissible(
-      key: ValueKey(category.id),
+      key: Key(subcategory.id),
       direction: DismissDirection.horizontal,
       background: Container(
         decoration: BoxDecoration(
@@ -64,7 +74,7 @@ class CategoryCard extends StatelessWidget {
             onDelete != null) {
           return await _showDeleteConfirmation(
             context,
-            category.name,
+            subcategory.name,
             isDark,
             screenWidth,
           );
@@ -80,7 +90,7 @@ class CategoryCard extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => ProductPage(category: category),
+              builder: (context) => ProductPage(subCategory: subcategory),
             ),
           );
         },
@@ -98,41 +108,41 @@ class CategoryCard extends StatelessWidget {
             ],
           ),
           child: ListTile(
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.04,
-            vertical: screenHeight * 0.01,
-          ),
-          leading: Container(
-            width: iconContainerSize,
-            height: iconContainerSize,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.green[900]!.withOpacity(0.3)
-                  : Colors.blue[100],
-              borderRadius: BorderRadius.circular(screenWidth * 0.025),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.04,
+              vertical: screenHeight * 0.01,
             ),
-            child: Icon(
-              category.icon,
-              color: isDark ? Colors.green[300] : Colors.blue[700],
-              size: iconSize,
+            leading: Container(
+              width: iconContainerSize,
+              height: iconContainerSize,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.green[900]!.withOpacity(0.3)
+                    : Colors.blue[100],
+                borderRadius: BorderRadius.circular(screenWidth * 0.025),
+              ),
+              child: Icon(
+                categoryIcon,
+                color: isDark ? Colors.green[300] : Colors.blue[700],
+                size: iconSize,
+              ),
+            ),
+            title: Text(
+              subcategory.name,
+              style: TextStyle(
+                fontSize: screenWidth * 0.04,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.grey[900],
+              ),
+            ),
+            subtitle: Text(
+              '$productCount Products',
+              style: TextStyle(
+                fontSize: screenWidth * 0.035,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
             ),
           ),
-          title: Text(
-            category.name,
-            style: TextStyle(
-              fontSize: screenWidth * 0.04,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : Colors.grey[900],
-            ),
-          ),
-          subtitle: Text(
-            '$productCount Products',
-            style: TextStyle(
-              fontSize: screenWidth * 0.035,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
-          ),
-        ),
         ),
       ),
     );
@@ -140,7 +150,7 @@ class CategoryCard extends StatelessWidget {
 
   Future<bool> _showDeleteConfirmation(
     BuildContext context,
-    String categoryName,
+    String subcategoryName,
     bool isDark,
     double screenWidth,
   ) async {
@@ -150,14 +160,14 @@ class CategoryCard extends StatelessWidget {
         return AlertDialog(
           backgroundColor: isDark ? Colors.grey[800] : Colors.white,
           title: Text(
-            'Delete Category',
+            'Delete Subcategory',
             style: TextStyle(
               fontSize: screenWidth * 0.045,
               color: isDark ? Colors.white : Colors.grey[900],
             ),
           ),
           content: Text(
-            'Are you sure you want to delete "$categoryName"?',
+            'Are you sure you want to delete "$subcategoryName"?',
             style: TextStyle(
               fontSize: screenWidth * 0.04,
               color: isDark ? Colors.grey[300] : Colors.grey[700],

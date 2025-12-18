@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:de_helper/models/measurement.dart';
 import 'package:de_helper/utility/theme_selector.dart';
 import 'package:de_helper/widgets/stat_card.dart';
-import 'package:de_helper/widgets/measurement_form_bottom_sheet.dart';
+import 'package:de_helper/pages/Measurement/widgets/measurement_form_bottom_sheet.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
+import 'package:de_helper/pages/Measurement/widgets/measurement_empty_state.dart';
 
 class MeasurementPage extends StatefulWidget {
   const MeasurementPage({super.key});
@@ -175,34 +176,6 @@ class _MeasurementPageState extends State<MeasurementPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.straighten_outlined,
-            size: screenWidth * 0.25,
-            color: isDark ? Colors.grey[600] : Colors.grey[400],
-          ),
-          SizedBox(height: screenHeight * 0.02),
-          Text(
-            'No measurements found',
-            style: TextStyle(
-              fontSize: screenWidth * 0.045,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
@@ -325,7 +298,11 @@ class _MeasurementPageState extends State<MeasurementPage> {
           ),
           _displayedMeasurements.isEmpty
               ? SliverFillRemaining(
-                  child: _buildEmptyState(),
+                  child: MeasurementEmptyState(
+                    isDark: isDark,
+                    screenWidth: screenWidth,
+                    screenHeight: screenHeight,
+                  ),
                 )
               : SliverPadding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),

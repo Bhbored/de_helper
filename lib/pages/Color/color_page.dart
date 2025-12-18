@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:de_helper/models/color_preset.dart';
 import 'package:de_helper/utility/theme_selector.dart';
 import 'package:de_helper/widgets/stat_card.dart';
-import 'package:de_helper/widgets/color_form_bottom_sheet.dart';
+import 'package:de_helper/pages/Color/widgets/color_form_bottom_sheet.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
+import 'package:de_helper/pages/Color/widgets/color_empty_state.dart';
 
 class ColorPage extends StatefulWidget {
   const ColorPage({super.key});
@@ -199,34 +200,6 @@ class _ColorPageState extends State<ColorPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.palette_outlined,
-            size: screenWidth * 0.25,
-            color: isDark ? Colors.grey[600] : Colors.grey[400],
-          ),
-          SizedBox(height: screenHeight * 0.02),
-          Text(
-            'No colors found',
-            style: TextStyle(
-              fontSize: screenWidth * 0.045,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
@@ -349,7 +322,11 @@ class _ColorPageState extends State<ColorPage> {
           ),
           _displayedColors.isEmpty
               ? SliverFillRemaining(
-                  child: _buildEmptyState(),
+                  child: ColorEmptyState(
+                    isDark: isDark,
+                    screenWidth: screenWidth,
+                    screenHeight: screenHeight,
+                  ),
                 )
               : SliverPadding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),

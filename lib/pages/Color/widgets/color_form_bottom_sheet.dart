@@ -124,9 +124,7 @@ class _ColorFormBottomSheetState extends State<ColorFormBottomSheet> {
                 ),
               ),
               Text(
-                widget.colorPreset == null
-                    ? 'Add New Color'
-                    : 'Edit Color',
+                widget.colorPreset == null ? 'Add New Color' : 'Edit Color',
                 style: TextStyle(
                   fontSize: screenWidth * 0.05,
                   fontWeight: FontWeight.w600,
@@ -228,7 +226,9 @@ class _ColorFormBottomSheetState extends State<ColorFormBottomSheet> {
                               color: _selectedColor,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: _isDark ? Colors.grey[600]! : Colors.grey[400]!,
+                                color: _isDark
+                                    ? Colors.grey[600]!
+                                    : Colors.grey[400]!,
                                 width: 2,
                               ),
                             ),
@@ -312,4 +312,3 @@ class _ColorFormBottomSheetState extends State<ColorFormBottomSheet> {
     );
   }
 }
-

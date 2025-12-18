@@ -6,9 +6,10 @@ import 'package:de_helper/models/category.dart';
 import 'package:de_helper/utility/theme_selector.dart';
 import 'package:de_helper/widgets/stat_card.dart';
 import 'package:de_helper/widgets/sort_button.dart';
-import 'package:de_helper/widgets/category_card.dart';
-import 'package:de_helper/widgets/category_form_bottom_sheet.dart';
+import 'package:de_helper/pages/Category/widgets/category_card.dart';
+import 'package:de_helper/pages/Category/widgets/category_form_bottom_sheet.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
+import 'package:de_helper/pages/Category/widgets/category_empty_state.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
@@ -380,7 +381,7 @@ class _CategoryPageState extends State<CategoryPage> {
           ),
           _displayedCategories.isEmpty
               ? SliverFillRemaining(
-                  child: _EmptyStateView(
+                  child: CategoryEmptyState(
                     isDark: isDark,
                     screenWidth: screenWidth,
                     screenHeight: screenHeight,
@@ -415,55 +416,6 @@ class _CategoryPageState extends State<CategoryPage> {
                   ),
                 ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyStateView extends StatelessWidget {
-  final bool isDark;
-  final double screenWidth;
-  final double screenHeight;
-
-  const _EmptyStateView({
-    required this.isDark,
-    required this.screenWidth,
-    required this.screenHeight,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.1),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.folder_off,
-              size: screenWidth * 0.3,
-              color: isDark ? Colors.grey[600] : Colors.grey[400],
-            ),
-            SizedBox(height: screenHeight * 0.03),
-            Text(
-              'No Categories Found',
-              style: TextStyle(
-                fontSize: screenWidth * 0.05,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.grey[300] : Colors.grey[700],
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.01),
-            Text(
-              'Try adjusting your search terms',
-              style: TextStyle(
-                fontSize: screenWidth * 0.035,
-                color: isDark ? Colors.grey[500] : Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -5,6 +5,9 @@ import 'package:de_helper/test_data/test_subcategories.dart';
 import 'package:de_helper/test_data/test_colors.dart';
 import 'package:de_helper/test_data/test_measurements.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
+import 'package:de_helper/pages/Product/widgets/product_detail_section.dart';
+import 'package:de_helper/pages/Product/widgets/product_detail_item.dart';
+import 'package:de_helper/pages/Product/widgets/product_detail_item_with_color.dart';
 
 class ProductDetailPage extends StatelessWidget {
   final Product product;
@@ -144,48 +147,43 @@ class ProductDetailPage extends StatelessWidget {
             ),
           ),
           SizedBox(height: screenHeight * 0.03),
-          _buildDetailSection(
-            context,
-            screenWidth,
-            screenHeight,
-            isDark,
-            'Basic Information',
-            [
-              _buildDetailItem(
-                context,
-                screenWidth,
-                isDark,
-                'Price',
-                '\$${product.price.toStringAsFixed(2)}',
+          ProductDetailSection(
+            isDark: isDark,
+            screenWidth: screenWidth,
+            screenHeight: screenHeight,
+            title: 'Basic Information',
+            children: [
+              ProductDetailItem(
+                isDark: isDark,
+                screenWidth: screenWidth,
+                label: 'Price',
+                value: '\$${product.price.toStringAsFixed(2)}',
               ),
               Divider(
                 height: 1,
                 thickness: 1,
                 color: isDark ? Colors.grey[700] : Colors.grey[300],
               ),
-              _buildDetailItem(
-                context,
-                screenWidth,
-                isDark,
-                'Quantity',
-                product.quantity.toString(),
+              ProductDetailItem(
+                isDark: isDark,
+                screenWidth: screenWidth,
+                label: 'Quantity',
+                value: product.quantity.toString(),
               ),
             ],
           ),
           SizedBox(height: screenHeight * 0.02),
-          _buildDetailSection(
-            context,
-            screenWidth,
-            screenHeight,
-            isDark,
-            'Barcode Information',
-            [
-              _buildDetailItem(
-                context,
-                screenWidth,
-                isDark,
-                'Primary Barcode',
-                product.barcode,
+          ProductDetailSection(
+            isDark: isDark,
+            screenWidth: screenWidth,
+            screenHeight: screenHeight,
+            title: 'Barcode Information',
+            children: [
+              ProductDetailItem(
+                isDark: isDark,
+                screenWidth: screenWidth,
+                label: 'Primary Barcode',
+                value: product.barcode,
               ),
               if (product.secondaryBarcode != null &&
                   product.secondaryBarcode!.isNotEmpty) ...[
@@ -194,30 +192,27 @@ class ProductDetailPage extends StatelessWidget {
                   thickness: 1,
                   color: isDark ? Colors.grey[700] : Colors.grey[300],
                 ),
-                _buildDetailItem(
-                  context,
-                  screenWidth,
-                  isDark,
-                  'Secondary Barcode',
-                  product.secondaryBarcode!,
+                ProductDetailItem(
+                  isDark: isDark,
+                  screenWidth: screenWidth,
+                  label: 'Secondary Barcode',
+                  value: product.secondaryBarcode!,
                 ),
               ],
             ],
           ),
           SizedBox(height: screenHeight * 0.02),
-          _buildDetailSection(
-            context,
-            screenWidth,
-            screenHeight,
-            isDark,
-            'Category Information',
-            [
-              _buildDetailItem(
-                context,
-                screenWidth,
-                isDark,
-                'Category',
-                _getCategoryName(),
+          ProductDetailSection(
+            isDark: isDark,
+            screenWidth: screenWidth,
+            screenHeight: screenHeight,
+            title: 'Category Information',
+            children: [
+              ProductDetailItem(
+                isDark: isDark,
+                screenWidth: screenWidth,
+                label: 'Category',
+                value: _getCategoryName(),
               ),
               if (product.subCategoryId != null &&
                   _getSubCategoryName() != 'None') ...[
@@ -226,43 +221,39 @@ class ProductDetailPage extends StatelessWidget {
                   thickness: 1,
                   color: isDark ? Colors.grey[700] : Colors.grey[300],
                 ),
-                _buildDetailItem(
-                  context,
-                  screenWidth,
-                  isDark,
-                  'Subcategory',
-                  _getSubCategoryName(),
+                ProductDetailItem(
+                  isDark: isDark,
+                  screenWidth: screenWidth,
+                  label: 'Subcategory',
+                  value: _getSubCategoryName(),
                 ),
               ],
             ],
           ),
           SizedBox(height: screenHeight * 0.02),
-          _buildDetailSection(
-            context,
-            screenWidth,
-            screenHeight,
-            isDark,
-            'Product Attributes',
-            [
-              _buildDetailItemWithColor(
-                context,
-                screenWidth,
-                isDark,
-                'Color',
-                _getColorName(),
-                _hexToColor(_getColorHex()),
+          ProductDetailSection(
+            isDark: isDark,
+            screenWidth: screenWidth,
+            screenHeight: screenHeight,
+            title: 'Product Attributes',
+            children: [
+              ProductDetailItemWithColor(
+                isDark: isDark,
+                screenWidth: screenWidth,
+                label: 'Color',
+                value: _getColorName(),
+                color: _hexToColor(_getColorHex()),
               ),
               Divider(
                 height: 1,
                 thickness: 1,
                 color: isDark ? Colors.grey[700] : Colors.grey[300],
               ),
-              _buildDetailItem(
-                context,
-                screenWidth,
-                isDark,
-                'Measurement Unit',
-                _getMeasurementName(),
+              ProductDetailItem(
+                isDark: isDark,
+                screenWidth: screenWidth,
+                label: 'Measurement Unit',
+                value: _getMeasurementName(),
               ),
             ],
           ),
@@ -270,20 +261,18 @@ class ProductDetailPage extends StatelessWidget {
               product.profitMargin > 0 ||
               product.manualCost != null) ...[
             SizedBox(height: screenHeight * 0.02),
-            _buildDetailSection(
-              context,
-              screenWidth,
-              screenHeight,
-              isDark,
-              'Financial Information',
-              [
+            ProductDetailSection(
+              isDark: isDark,
+              screenWidth: screenWidth,
+              screenHeight: screenHeight,
+              title: 'Financial Information',
+              children: [
                 if (product.cost > 0) ...[
-                  _buildDetailItem(
-                    context,
-                    screenWidth,
-                    isDark,
-                    'Cost',
-                    '\$${product.cost.toStringAsFixed(2)}',
+                  ProductDetailItem(
+                    isDark: isDark,
+                    screenWidth: screenWidth,
+                    label: 'Cost',
+                    value: '\$${product.cost.toStringAsFixed(2)}',
                   ),
                   if (product.profitMargin > 0 || product.manualCost != null)
                     Divider(
@@ -293,12 +282,12 @@ class ProductDetailPage extends StatelessWidget {
                     ),
                 ],
                 if (product.profitMargin > 0) ...[
-                  _buildDetailItem(
-                    context,
-                    screenWidth,
-                    isDark,
-                    'Profit Margin',
-                    '${(product.profitMargin * 100).toStringAsFixed(2)}%',
+                  ProductDetailItem(
+                    isDark: isDark,
+                    screenWidth: screenWidth,
+                    label: 'Profit Margin',
+                    value:
+                        '${(product.profitMargin * 100).toStringAsFixed(2)}%',
                   ),
                   if (product.manualCost != null)
                     Divider(
@@ -308,172 +297,16 @@ class ProductDetailPage extends StatelessWidget {
                     ),
                 ],
                 if (product.manualCost != null)
-                  _buildDetailItem(
-                    context,
-                    screenWidth,
-                    isDark,
-                    'Manual Cost',
-                    '\$${product.manualCost!.toStringAsFixed(2)}',
+                  ProductDetailItem(
+                    isDark: isDark,
+                    screenWidth: screenWidth,
+                    label: 'Manual Cost',
+                    value: '\$${product.manualCost!.toStringAsFixed(2)}',
                   ),
               ],
             ),
           ],
           SizedBox(height: screenHeight * 0.02),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailSection(
-    BuildContext context,
-    double screenWidth,
-    double screenHeight,
-    bool isDark,
-    String title,
-    List<Widget> children,
-  ) {
-    if (children.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : Colors.white,
-        borderRadius: BorderRadius.circular(screenWidth * 0.04),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.05,
-              vertical: screenWidth * 0.04,
-            ),
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: screenWidth * 0.048,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : Colors.grey[900],
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: isDark ? Colors.grey[700] : Colors.grey[300],
-          ),
-          ...children,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailItem(
-    BuildContext context,
-    double screenWidth,
-    bool isDark,
-    String label,
-    String value,
-  ) {
-    if (value.isEmpty || value == 'Unknown' || value == 'None') {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: screenWidth * 0.05,
-        vertical: screenWidth * 0.035,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: screenWidth * 0.32,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: screenWidth * 0.04,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.grey[900],
-              ),
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailItemWithColor(
-    BuildContext context,
-    double screenWidth,
-    bool isDark,
-    String label,
-    String value,
-    Color color,
-  ) {
-    return Padding(
-      padding: EdgeInsets.all(screenWidth * 0.04),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: screenWidth * 0.3,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: screenWidth * 0.038,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-          ),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Container(
-                  width: screenWidth * 0.06,
-                  height: screenWidth * 0.06,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(screenWidth * 0.01),
-                    border: Border.all(
-                      color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-                      width: 1,
-                    ),
-                  ),
-                ),
-                SizedBox(width: screenWidth * 0.02),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.038,
-                    fontWeight: FontWeight.w400,
-                    color: isDark ? Colors.white : Colors.grey[900],
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
