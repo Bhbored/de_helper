@@ -1,7 +1,7 @@
 import 'package:de_helper/models/subcategory.dart';
 import 'test_categories.dart';
 
-final List<SubCategory> testSubCategories = [
+List<SubCategory> testSubCategories = [
   SubCategory.create(
     name: 'Laptops',
     categoryId: electronicsCategory.id,
