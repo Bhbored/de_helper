@@ -1,0 +1,193 @@
+import 'package:flutter/material.dart';
+import 'package:de_helper/models/measurement.dart';
+
+class MeasurementFormBottomSheet extends StatefulWidget {
+  final MeasurementPreset? measurement;
+
+  const MeasurementFormBottomSheet({super.key, this.measurement});
+
+  @override
+  State<MeasurementFormBottomSheet> createState() =>
+      _MeasurementFormBottomSheetState();
+}
+
+class _MeasurementFormBottomSheetState
+    extends State<MeasurementFormBottomSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  bool _isDark = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.measurement != null) {
+      _nameController.text = widget.measurement!.name;
+    }
+  }
+
+  @override
+  void didUpdateWidget(MeasurementFormBottomSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.measurement != null &&
+        widget.measurement?.id != oldWidget.measurement?.id) {
+      _nameController.text = widget.measurement!.name;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    if (_formKey.currentState!.validate()) {
+      Navigator.of(context).pop({
+        'name': _nameController.text.trim(),
+      });
+    }
+  }
+
+  void _cancel() {
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
+    final viewInsets = mediaQuery.viewInsets;
+    _isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _isDark ? Colors.grey[900] : Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(screenWidth * 0.06),
+          topRight: Radius.circular(screenWidth * 0.06),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: screenWidth * 0.05,
+          right: screenWidth * 0.05,
+          top: screenHeight * 0.02,
+          bottom: viewInsets.bottom + screenHeight * 0.02,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: screenWidth * 0.1,
+                height: 4,
+                margin: EdgeInsets.only(bottom: screenHeight * 0.02),
+                decoration: BoxDecoration(
+                  color: _isDark ? Colors.grey[700] : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                widget.measurement == null
+                    ? 'Add New Measurement'
+                    : 'Edit Measurement',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.05,
+                  fontWeight: FontWeight.w600,
+                  color: _isDark ? Colors.white : Colors.grey[900],
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.03),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Measurement Name',
+                  hintText: 'Enter measurement name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                  ),
+                  filled: true,
+                  fillColor: _isDark ? Colors.grey[800] : Colors.grey[100],
+                ),
+                style: TextStyle(
+                  fontSize: screenWidth * 0.04,
+                  color: _isDark ? Colors.white : Colors.grey[900],
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter a measurement name';
+                  }
+                  if (value.trim().length < 2) {
+                    return 'Measurement name must be at least 2 characters';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: screenHeight * 0.03),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _cancel,
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          vertical: screenHeight * 0.02,
+                        ),
+                        side: BorderSide(
+                          color: _isDark
+                              ? Colors.grey[700]!
+                              : Colors.grey[300]!,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            screenWidth * 0.03,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.04,
+                          color: _isDark ? Colors.grey[300] : Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: screenWidth * 0.03),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          vertical: screenHeight * 0.02,
+                        ),
+                        backgroundColor: _isDark
+                            ? Colors.green[700]!
+                            : Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            screenWidth * 0.03,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Save',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.04,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
