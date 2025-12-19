@@ -10,15 +10,16 @@ import 'package:de_helper/pages/Category/widgets/category_card.dart';
 import 'package:de_helper/pages/Category/widgets/category_form_bottom_sheet.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
 import 'package:de_helper/pages/Category/widgets/category_empty_state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CategoryPage extends StatefulWidget {
+class CategoryPage extends ConsumerStatefulWidget {
   const CategoryPage({super.key});
 
   @override
-  State<CategoryPage> createState() => _CategoryPageState();
+  ConsumerState<CategoryPage> createState() => _CategoryPageState();
 }
 
-class _CategoryPageState extends State<CategoryPage> {
+class _CategoryPageState extends ConsumerState<CategoryPage> {
   String _sortType = 'Products';
   List<Category> _displayedCategories = [];
   final TextEditingController _searchController = TextEditingController();
