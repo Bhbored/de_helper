@@ -16,6 +16,7 @@ class CategoryNotifier extends _$CategoryNotifier {
     state = AsyncValue.data([...current, newCategory]);
     try {
       await _repository.create(newCategory);
+      refreshCategories();
     } catch (e) {
       state = AsyncValue.data(current);
       throw StateError('erorr adding Category ${newCategory.name}');
@@ -43,6 +44,7 @@ class CategoryNotifier extends _$CategoryNotifier {
     state = AsyncValue.data(current.where((x) => x.id != id).toList());
     try {
       _repository.delete(id);
+      refreshCategories();
     } catch (e) {
       state = AsyncValue.data([...current, categoryToBeDeleted]);
       rethrow;
@@ -62,6 +64,7 @@ class CategoryNotifier extends _$CategoryNotifier {
 
     try {
       await _repository.update(cat);
+      refreshCategories();
     } catch (e) {
       final rolledBackNotes = [...current];
       rolledBackNotes[noteIndex] = oldTask;

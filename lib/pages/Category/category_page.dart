@@ -23,6 +23,8 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
   final TextEditingController _searchController = TextEditingController();
   Category? copied;
   int? deleteIndex;
+  String sortType = 'Products';
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -31,7 +33,26 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    String sortType = 'Products';
+    ref.listen(categoryProvider, (previous, next) {
+      if (copied != null && next.value!.length < previous!.value!.length) {
+        final categoryToShow = copied!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Category "${categoryToShow.name}" deleted'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                ref
+                    .read(categoryProvider.notifier)
+                    .addInPlace(categoryToShow, deleteIndex!);
+                copied = null;
+              },
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
     final categories = ref.watch(categoryProvider);
     final products = ref.watch(prodcutProvider);
     void sortCategories() {
@@ -51,21 +72,16 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
         case 'Alphabetical':
           sorted.sort((a, b) => a.name.compareTo(b.name));
           break;
-        case 'Date Added':
-          break;
       }
       ref.read(categoryProvider.notifier).sortCategories(sorted);
     }
 
     void filterCategories(String query) {
-      setState(() {
-        if (query.isEmpty) {
-          ref.read(categoryProvider.notifier).refreshCategories();
-        } else {
-          ref.read(categoryProvider.notifier).filterByName(query);
-        }
-        sortCategories();
-      });
+      if (query.isEmpty) {
+        ref.read(categoryProvider.notifier).refreshCategories();
+      } else {
+        ref.read(categoryProvider.notifier).filterByName(query);
+      }
     }
 
     void clearSearch() {
@@ -105,30 +121,24 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     }
 
     void showEditCategoryBottomSheet(Category category) {
-      final categoryToEdit = categories.value!.firstWhere(
-        (c) => c.id == category.id,
-        orElse: () => category,
-      );
-
       showModalBottomSheet(
         context: context,
         useSafeArea: true,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (context) => CategoryFormBottomSheet(category: categoryToEdit),
+        builder: (context) => CategoryFormBottomSheet(category: category),
       ).then((result) {
         if (result != null &&
             result['name'] != null &&
             result['icon'] != null) {
-          final index = categories.value!.indexWhere(
-            (c) => c.id == category.id,
+          final updatedCategory = category.copyWith(
+            name: result['name'] as String,
+            icon: result['icon'] as IconData,
           );
-          if (index != -1) {
-            ref.read(categoryProvider.notifier).updateCategory(category);
-            setState(() {
-              sortCategories();
-            });
-          }
+          ref.read(categoryProvider.notifier).updateCategory(updatedCategory);
+          setState(() {
+            sortCategories();
+          });
         }
       });
     }
@@ -203,132 +213,142 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       title: 'Categories',
       onAction: showAddCategoryBottomSheet,
 
-      body: categories.when(
-        data: (x) {
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: expandedHeight,
-                floating: false,
-                pinned: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: BoxDecoration(gradient: gradient),
-                    padding: EdgeInsets.fromLTRB(
-                      horizontalPadding,
-                      screenHeight * 0.08,
-                      horizontalPadding,
-                      verticalPadding * 1.5,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'OVERALL STATISTICS',
-                          style: TextStyle(
-                            fontSize: screenWidth * 0.035,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.grey[400] : Colors.grey[700],
-                            letterSpacing: 1.2,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(categoryProvider);
+          ref.read(categoryProvider.future);
+        },
+        child: categories.when(
+          data: (x) {
+            return CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: expandedHeight,
+                  floating: false,
+                  pinned: true,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Container(
+                      decoration: BoxDecoration(gradient: gradient),
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        screenHeight * 0.08,
+                        horizontalPadding,
+                        verticalPadding * 1.5,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'OVERALL STATISTICS',
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.035,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[700],
+                              letterSpacing: 1.2,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            StatCard(
-                              value: getTotalProducts().toString(),
-                              label: 'Total Products',
-                              isDark: isDark,
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight,
-                            ),
-                            StatCard(
-                              value: getTotalCategories().toString(),
-                              label: 'Total Categories',
-                              isDark: isDark,
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight,
-                            ),
-                            StatCard(
-                              value: getTotalSubcategories().toString(),
-                              label: 'Total Subcategories',
-                              isDark: isDark,
-                              screenWidth: screenWidth,
-                              screenHeight: screenHeight,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  centerTitle: true,
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(screenWidth * 0.06),
-                    topRight: Radius.circular(screenWidth * 0.06),
-                  ),
-                  child: Container(
-                    color: isDark ? Colors.grey[900] : Colors.white,
-                    padding: EdgeInsets.all(horizontalPadding),
-                    child: Column(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.grey[800] : Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              screenWidth * 0.03,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                          SizedBox(height: screenHeight * 0.02),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              StatCard(
+                                value: getTotalProducts().toString(),
+                                label: 'Total Products',
+                                isDark: isDark,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight,
+                              ),
+                              StatCard(
+                                value: getTotalCategories().toString(),
+                                label: 'Total Categories',
+                                isDark: isDark,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight,
+                              ),
+                              StatCard(
+                                value: getTotalSubcategories().toString(),
+                                label: 'Total Subcategories',
+                                isDark: isDark,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight,
                               ),
                             ],
                           ),
-                          child: ValueListenableBuilder<TextEditingValue>(
-                            valueListenable: _searchController,
-                            builder: (context, value, child) {
-                              return TextField(
-                                controller: _searchController,
-                                onChanged: filterCategories,
-                                decoration: InputDecoration(
-                                  hintText: 'Search Categories...',
-                                  hintStyle: TextStyle(color: Colors.grey[400]),
-                                  prefixIcon: Icon(
-                                    Icons.search,
-                                    color: Colors.grey[400],
-                                  ),
-                                  suffixIcon: value.text.isNotEmpty
-                                      ? IconButton(
-                                          icon: Icon(
-                                            Icons.close,
-                                            color: Colors.grey[400],
-                                          ),
-                                          onPressed: clearSearch,
-                                        )
-                                      : null,
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: horizontalPadding,
-                                    vertical: screenHeight * 0.02,
-                                  ),
+                        ],
+                      ),
+                    ),
+                    centerTitle: true,
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(screenWidth * 0.06),
+                      topRight: Radius.circular(screenWidth * 0.06),
+                    ),
+                    child: Container(
+                      color: isDark ? Colors.grey[900] : Colors.white,
+                      padding: EdgeInsets.all(horizontalPadding),
+                      child: Column(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.grey[800] : Colors.white,
+                              borderRadius: BorderRadius.circular(
+                                screenWidth * 0.03,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
-                              );
-                            },
+                              ],
+                            ),
+                            child: ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _searchController,
+                              builder: (context, value, child) {
+                                return TextField(
+                                  controller: _searchController,
+                                  onChanged: filterCategories,
+                                  decoration: InputDecoration(
+                                    hintText: 'Search Categories...',
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[400],
+                                    ),
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      color: Colors.grey[400],
+                                    ),
+                                    suffixIcon: value.text.isNotEmpty
+                                        ? IconButton(
+                                            icon: Icon(
+                                              Icons.close,
+                                              color: Colors.grey[400],
+                                            ),
+                                            onPressed: clearSearch,
+                                          )
+                                        : null,
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: horizontalPadding,
+                                      vertical: screenHeight * 0.02,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
+                          SizedBox(height: screenHeight * 0.02),
+                          SizedBox(width: screenWidth * 0.02),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            spacing: 10,
                             children: [
                               SortButton(
-                                label: 'Sort: Products',
+                                label: 'None',
                                 isActive: sortType == 'Products',
                                 onTap: () {
                                   setState(() => sortType = 'Products');
@@ -338,7 +358,6 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                                 screenWidth: screenWidth,
                                 screenHeight: screenHeight,
                               ),
-                              SizedBox(width: screenWidth * 0.02),
                               SortButton(
                                 label: 'Sort: Alphabetical',
                                 isActive: sortType == 'Alphabetical',
@@ -350,79 +369,70 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                                 screenWidth: screenWidth,
                                 screenHeight: screenHeight,
                               ),
-                              SizedBox(width: screenWidth * 0.02),
-                              SortButton(
-                                label: 'Date Added',
-                                isActive: sortType == 'Date Added',
-                                onTap: () {
-                                  setState(() => sortType = 'Date Added');
-                                  sortCategories();
-                                },
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
-                              ),
                             ],
                           ),
-                        ),
-                        SizedBox(
-                          height: viewInsets.bottom > 0 ? viewInsets.bottom : 0,
-                        ),
-                      ],
+                          SizedBox(width: screenWidth * 0.02),
+                          SizedBox(
+                            height: viewInsets.bottom > 0
+                                ? viewInsets.bottom
+                                : 0,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              x.isEmpty
-                  ? SliverFillRemaining(
-                      child: CategoryEmptyState(
-                        isDark: isDark,
-                        screenWidth: screenWidth,
-                        screenHeight: screenHeight,
-                      ),
-                    )
-                  : SliverPadding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: horizontalPadding,
-                      ),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final category = x[index];
-                            final productCount = getProductCount(category.id);
+                x.isEmpty
+                    ? SliverFillRemaining(
+                        child: CategoryEmptyState(
+                          isDark: isDark,
+                          screenWidth: screenWidth,
+                          screenHeight: screenHeight,
+                        ),
+                      )
+                    : SliverPadding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                        ),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final category = x[index];
+                              final productCount = getProductCount(category.id);
 
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: screenHeight * 0.015,
-                              ),
-                              child: CategoryCard(
-                                category: category,
-                                productCount: productCount,
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
-                                onEdit: () =>
-                                    showEditCategoryBottomSheet(category),
-                                onDelete: () => deleteCategory(category),
-                              ),
-                            );
-                          },
-                          childCount: x.length,
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: screenHeight * 0.015,
+                                ),
+                                child: CategoryCard(
+                                  category: category,
+                                  productCount: productCount,
+                                  isDark: isDark,
+                                  screenWidth: screenWidth,
+                                  screenHeight: screenHeight,
+                                  onEdit: () =>
+                                      showEditCategoryBottomSheet(category),
+                                  onDelete: () => deleteCategory(category),
+                                ),
+                              );
+                            },
+                            childCount: x.length,
+                          ),
                         ),
                       ),
-                    ),
-            ],
-          );
-        },
-        error: (e, s) => Center(
-          child: Text(
-            e.toString(),
-            style: Theme.of(context).textTheme.titleMedium,
+              ],
+            );
+          },
+          error: (e, s) => Center(
+            child: Text(
+              e.toString(),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
+          loading: () {
+            return CircularProgressIndicator();
+          },
         ),
-        loading: () {
-          return CircularProgressIndicator();
-        },
       ),
     );
   }

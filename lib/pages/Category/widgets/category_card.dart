@@ -139,28 +139,3 @@ class _CategoryCardState extends State<CategoryCard> {
     );
   }
 }
-
-
-// ref.listen(categoryProvider, (previous, next) {
-    //   if (copied != null &&
-    //       next.isLoading == false &&
-    //       previous?.isLoading == true) {
-    //     // Only show snackbar after a successful deletion
-    //     final categoryToShow = copied!;
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(
-    //         content: Text('Category "${categoryToShow.name}" deleted'),
-    //         action: SnackBarAction(
-    //           label: 'Undo',
-    //           onPressed: () {
-    //             ref
-    //                 .read(categoryProvider.notifier)
-    //                 .addInPlace(categoryToShow, deleteIndex!);
-    //             copied = null;
-    //           },
-    //         ),
-    //         duration: const Duration(seconds: 3),
-    //       ),
-    //     );
-    //   }
-    // });
