@@ -1,16 +1,17 @@
+import 'package:de_helper/providers/product_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:de_helper/models/product.dart';
 import 'package:de_helper/models/category.dart';
 import 'package:de_helper/models/subcategory.dart';
 import 'package:de_helper/models/color_preset.dart';
 import 'package:de_helper/models/measurement.dart';
-import 'package:de_helper/test_data/test_products.dart';
 import 'package:de_helper/test_data/test_colors.dart';
 import 'package:de_helper/test_data/test_measurements.dart';
 import 'package:de_helper/test_data/test_subcategories.dart';
 
-class ProductFormBottomSheet extends StatefulWidget {
+class ProductFormBottomSheet extends ConsumerStatefulWidget {
   final Category? category;
   final SubCategory? subCategory;
   final Product? product;
@@ -20,16 +21,15 @@ class ProductFormBottomSheet extends StatefulWidget {
     this.category,
     this.subCategory,
     this.product,
-  }) : assert(
-         category != null || subCategory != null,
-         'Either category or subCategory must be provided',
-       );
+  });
 
   @override
-  State<ProductFormBottomSheet> createState() => _ProductFormBottomSheetState();
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _ProductFormBottomSheetState();
 }
 
-class _ProductFormBottomSheetState extends State<ProductFormBottomSheet> {
+class _ProductFormBottomSheetState
+    extends ConsumerState<ProductFormBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
@@ -478,7 +478,7 @@ class _ProductFormBottomSheetState extends State<ProductFormBottomSheet> {
                       ),
                       SizedBox(height: screenHeight * 0.02),
                       DropdownButtonFormField<String>(
-                        value: _getValidColorId(_selectedColorId),
+                        initialValue: _getValidColorId(_selectedColorId),
                         decoration: InputDecoration(
                           labelText: 'Color',
                           border: OutlineInputBorder(
@@ -507,7 +507,9 @@ class _ProductFormBottomSheetState extends State<ProductFormBottomSheet> {
                       ),
                       SizedBox(height: screenHeight * 0.02),
                       DropdownButtonFormField<String>(
-                        value: _getValidMeasurementId(_selectedMeasurementId),
+                        initialValue: _getValidMeasurementId(
+                          _selectedMeasurementId,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Measurement Unit',
                           border: OutlineInputBorder(
@@ -537,7 +539,9 @@ class _ProductFormBottomSheetState extends State<ProductFormBottomSheet> {
                       SizedBox(height: screenHeight * 0.02),
                       if (_getUniqueSubCategories().isNotEmpty)
                         DropdownButtonFormField<String>(
-                          value: _getValidSubCategoryId(_selectedSubCategoryId),
+                          initialValue: _getValidSubCategoryId(
+                            _selectedSubCategoryId,
+                          ),
                           decoration: InputDecoration(
                             labelText: 'Subcategory (Optional)',
                             border: OutlineInputBorder(
@@ -618,16 +622,14 @@ class _ProductFormBottomSheetState extends State<ProductFormBottomSheet> {
                           );
 
                           if (widget.product == null) {
-                            testProducts.add(product);
+                            ref
+                                .read(prodcutProvider.notifier)
+                                .addProduct(product);
                           } else {
-                            final index = testProducts.indexWhere(
-                              (p) => p.id == widget.product!.id,
-                            );
-                            if (index != -1) {
-                              testProducts[index] = product;
-                            }
+                            ref
+                                .read(prodcutProvider.notifier)
+                                .updateProduct(product);
                           }
-
                           Navigator.of(context).pop(product);
                         }
                       },

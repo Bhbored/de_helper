@@ -90,7 +90,10 @@ class SubcategoryCard extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => ProductPage(subCategory: subcategory),
+              builder: (context) => ProductPage(
+                subCategory: subcategory,
+                category: null,
+              ),
             ),
           );
         },

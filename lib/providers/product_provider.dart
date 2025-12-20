@@ -21,6 +21,7 @@ class ProdcutNotifier extends _$ProdcutNotifier {
     state = AsyncValue.data([...current, newProduct]);
     try {
       await _repo.create(newProduct);
+      refreshProduct();
     } catch (e) {
       state = AsyncValue.data(current);
       throw StateError('erorr adding Product ${newProduct.name}');
@@ -36,6 +37,7 @@ class ProdcutNotifier extends _$ProdcutNotifier {
     state = AsyncValue.data(current.where((x) => x.id != id).toList());
     try {
       _repo.delete(id);
+      refreshProduct();
     } catch (e) {
       state = AsyncValue.data([...current, categoryToBeDeleted]);
       rethrow;
@@ -55,11 +57,22 @@ class ProdcutNotifier extends _$ProdcutNotifier {
 
     try {
       await _repo.update(cat);
+      refreshProduct();
     } catch (e) {
       final rolledBackNotes = [...current];
       rolledBackNotes[noteIndex] = oldTask;
       state = AsyncValue.data(rolledBackNotes);
       rethrow;
     }
+  }
+
+  void filterByName(String query) {
+    final current = state.value ?? [];
+    final newList = current
+        .where(
+          (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
+        )
+        .toList();
+    state = AsyncValue.data(newList);
   }
 }

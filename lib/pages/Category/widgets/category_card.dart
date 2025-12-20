@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/category.dart';
 import 'package:de_helper/pages/Product/product_page.dart';
@@ -81,7 +80,10 @@ class _CategoryCardState extends State<CategoryCard> {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => ProductPage(category: widget.category),
+              builder: (context) => ProductPage(
+                category: widget.category,
+                subCategory: null,
+              ),
             ),
           );
         },
