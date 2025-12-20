@@ -22,6 +22,18 @@ class CategoryNotifier extends _$CategoryNotifier {
     }
   }
 
+  Future<void> addInPlace(Category newCategory, int index) async {
+    final current = state.value ?? [];
+    current.insert(index, newCategory);
+    state = AsyncValue.data([...current]);
+    try {
+      await _repository.create(newCategory);
+    } catch (e) {
+      state = AsyncValue.data(current);
+      throw StateError('erorr adding Category ${newCategory.name}');
+    }
+  }
+
   Future<void> deleteCategory(String id) async {
     final current = state.value ?? [];
     final categoryToBeDeleted = current.firstWhere(
@@ -61,5 +73,11 @@ class CategoryNotifier extends _$CategoryNotifier {
   Future<void> refreshCategories() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _repository.getAll());
+  }
+
+  int getIndex(Category cat) {
+    final current = state.value ?? [];
+    final index = current.indexOf(cat);
+    return index;
   }
 }

@@ -1,5 +1,6 @@
+import 'package:de_helper/providers/category_provider.dart';
+import 'package:de_helper/providers/product_provider.dart';
 import 'package:de_helper/test_data/test_categories.dart';
-import 'package:de_helper/test_data/test_products.dart';
 import 'package:de_helper/test_data/test_subcategories.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/category.dart';
@@ -31,18 +32,19 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
   @override
   Widget build(BuildContext context) {
     String sortType = 'Products';
+    final categories = ref.watch(categoryProvider);
     List<Category> displayedCategories = [];
-
+    final products = ref.watch(prodcutProvider);
     void sortCategories() {
-      final sorted = List<Category>.from(displayedCategories);
+      final sorted = categories.value!;
 
       switch (sortType) {
         case 'Products':
           sorted.sort((a, b) {
-            final aCount = testProducts
+            final aCount = products.value!
                 .where((p) => p.categoryId == a.id)
                 .length;
-            final bCount = testProducts
+            final bCount = products.value!
                 .where((p) => p.categoryId == b.id)
                 .length;
             return bCount.compareTo(aCount);
@@ -63,9 +65,9 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     void filterCategories(String query) {
       setState(() {
         if (query.isEmpty) {
-          displayedCategories = testCategories;
+          displayedCategories = categories.value!;
         } else {
-          displayedCategories = testCategories
+          displayedCategories = categories.value!
               .where(
                 (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
               )
@@ -81,11 +83,11 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     }
 
     int getProductCount(String categoryId) {
-      return testProducts.where((p) => p.categoryId == categoryId).length;
+      return products.value!.where((p) => p.categoryId == categoryId).length;
     }
 
-    int getTotalProducts() => testProducts.length;
-    int getTotalCategories() => testCategories.length;
+    int getTotalProducts() => products.value!.length;
+    int getTotalCategories() => categories.value!.length;
     int getTotalSubcategories() => testSubCategories.length;
 
     void showAddCategoryBottomSheet() {
@@ -103,9 +105,8 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
             name: result['name'] as String,
             icon: result['icon'] as IconData,
           );
+          ref.read(categoryProvider.notifier).addCategory(newCategory);
           setState(() {
-            testCategories.add(newCategory);
-            displayedCategories = testCategories;
             sortCategories();
           });
         }
@@ -113,7 +114,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     }
 
     void showEditCategoryBottomSheet(Category category) {
-      final categoryToEdit = testCategories.firstWhere(
+      final categoryToEdit = categories.value!.firstWhere(
         (c) => c.id == category.id,
         orElse: () => category,
       );
@@ -128,20 +129,12 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
         if (result != null &&
             result['name'] != null &&
             result['icon'] != null) {
-          final index = testCategories.indexWhere((c) => c.id == category.id);
+          final index = categories.value!.indexWhere(
+            (c) => c.id == category.id,
+          );
           if (index != -1) {
+            ref.read(categoryProvider.notifier).updateCategory(category);
             setState(() {
-              testCategories[index] = Category(
-                id: category.id,
-                name: result['name'] as String,
-                icon: result['icon'] as IconData,
-              );
-              final displayedIndex = displayedCategories.indexWhere(
-                (c) => c.id == category.id,
-              );
-              if (displayedIndex != -1) {
-                displayedCategories[displayedIndex] = testCategories[index];
-              }
               sortCategories();
             });
           }
@@ -150,6 +143,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     }
 
     void deleteCategory(Category category) {
+      final id = category.id;
       showDialog(
         context: context,
         builder: (context) {
@@ -183,11 +177,30 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
               ),
               TextButton(
                 onPressed: () {
-                  setState(() {
-                    testCategories.removeWhere((c) => c.id == category.id);
-                    displayedCategories.removeWhere(
-                      (c) => c.id == category.id,
-                    );
+                  Category cat = category.copyWith();
+                  final index = ref
+                      .read(categoryProvider.notifier)
+                      .getIndex(cat);
+                  ref.read(categoryProvider.notifier).deleteCategory(id);
+                  ref.listen(categoryProvider, (previous, next) {
+                    if (next != previous) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Category "${cat.name}" deleted',
+                          ),
+                          action: SnackBarAction(
+                            label: 'Undo',
+                            onPressed: () {
+                              ref
+                                  .read(categoryProvider.notifier)
+                                  .addInPlace(cat, index);
+                            },
+                          ),
+                          duration: const Duration(seconds: 5),
+                        ),
+                      );
+                    }
                   });
                   Navigator.of(context).pop();
                 },
@@ -218,208 +231,227 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     return PageScaffold(
       title: 'Categories',
       onAction: showAddCategoryBottomSheet,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: expandedHeight,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(gradient: gradient),
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  screenHeight * 0.08,
-                  horizontalPadding,
-                  verticalPadding * 1.5,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'OVERALL STATISTICS',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.035,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.grey[400] : Colors.grey[700],
-                        letterSpacing: 1.2,
-                      ),
+
+      body: categories.when(
+        data: (x) {
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: expandedHeight,
+                floating: false,
+                pinned: true,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: BoxDecoration(gradient: gradient),
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      screenHeight * 0.08,
+                      horizontalPadding,
+                      verticalPadding * 1.5,
                     ),
-                    SizedBox(height: screenHeight * 0.02),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        StatCard(
-                          value: getTotalProducts().toString(),
-                          label: 'Total Products',
-                          isDark: isDark,
-                          screenWidth: screenWidth,
-                          screenHeight: screenHeight,
+                        Text(
+                          'OVERALL STATISTICS',
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.035,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.grey[400] : Colors.grey[700],
+                            letterSpacing: 1.2,
+                          ),
                         ),
-                        StatCard(
-                          value: getTotalCategories().toString(),
-                          label: 'Total Categories',
-                          isDark: isDark,
-                          screenWidth: screenWidth,
-                          screenHeight: screenHeight,
-                        ),
-                        StatCard(
-                          value: getTotalSubcategories().toString(),
-                          label: 'Total Subcategories',
-                          isDark: isDark,
-                          screenWidth: screenWidth,
-                          screenHeight: screenHeight,
+                        SizedBox(height: screenHeight * 0.02),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            StatCard(
+                              value: getTotalProducts().toString(),
+                              label: 'Total Products',
+                              isDark: isDark,
+                              screenWidth: screenWidth,
+                              screenHeight: screenHeight,
+                            ),
+                            StatCard(
+                              value: getTotalCategories().toString(),
+                              label: 'Total Categories',
+                              isDark: isDark,
+                              screenWidth: screenWidth,
+                              screenHeight: screenHeight,
+                            ),
+                            StatCard(
+                              value: getTotalSubcategories().toString(),
+                              label: 'Total Subcategories',
+                              isDark: isDark,
+                              screenWidth: screenWidth,
+                              screenHeight: screenHeight,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                  centerTitle: true,
                 ),
               ),
-              centerTitle: true,
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(screenWidth * 0.06),
-                topRight: Radius.circular(screenWidth * 0.06),
-              ),
-              child: Container(
-                color: isDark ? Colors.grey[900] : Colors.white,
-                padding: EdgeInsets.all(horizontalPadding),
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[800] : Colors.white,
-                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: _searchController,
-                        builder: (context, value, child) {
-                          return TextField(
-                            controller: _searchController,
-                            onChanged: filterCategories,
-                            decoration: InputDecoration(
-                              hintText: 'Search Categories...',
-                              hintStyle: TextStyle(color: Colors.grey[400]),
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: Colors.grey[400],
-                              ),
-                              suffixIcon: value.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: Colors.grey[400],
-                                      ),
-                                      onPressed: clearSearch,
-                                    )
-                                  : null,
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding,
-                                vertical: screenHeight * 0.02,
-                              ),
+              SliverToBoxAdapter(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(screenWidth * 0.06),
+                    topRight: Radius.circular(screenWidth * 0.06),
+                  ),
+                  child: Container(
+                    color: isDark ? Colors.grey[900] : Colors.white,
+                    padding: EdgeInsets.all(horizontalPadding),
+                    child: Column(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.grey[800] : Colors.white,
+                            borderRadius: BorderRadius.circular(
+                              screenWidth * 0.03,
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          SortButton(
-                            label: 'Sort: Products',
-                            isActive: sortType == 'Products',
-                            onTap: () {
-                              setState(() => sortType = 'Products');
-                              sortCategories();
-                            },
-                            isDark: isDark,
-                            screenWidth: screenWidth,
-                            screenHeight: screenHeight,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          SizedBox(width: screenWidth * 0.02),
-                          SortButton(
-                            label: 'Sort: Alphabetical',
-                            isActive: sortType == 'Alphabetical',
-                            onTap: () {
-                              setState(() => sortType = 'Alphabetical');
-                              sortCategories();
+                          child: ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _searchController,
+                            builder: (context, value, child) {
+                              return TextField(
+                                controller: _searchController,
+                                onChanged: filterCategories,
+                                decoration: InputDecoration(
+                                  hintText: 'Search Categories...',
+                                  hintStyle: TextStyle(color: Colors.grey[400]),
+                                  prefixIcon: Icon(
+                                    Icons.search,
+                                    color: Colors.grey[400],
+                                  ),
+                                  suffixIcon: value.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: Icon(
+                                            Icons.close,
+                                            color: Colors.grey[400],
+                                          ),
+                                          onPressed: clearSearch,
+                                        )
+                                      : null,
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: horizontalPadding,
+                                    vertical: screenHeight * 0.02,
+                                  ),
+                                ),
+                              );
                             },
-                            isDark: isDark,
-                            screenWidth: screenWidth,
-                            screenHeight: screenHeight,
                           ),
-                          SizedBox(width: screenWidth * 0.02),
-                          SortButton(
-                            label: 'Date Added',
-                            isActive: sortType == 'Date Added',
-                            onTap: () {
-                              setState(() => sortType = 'Date Added');
-                              sortCategories();
-                            },
-                            isDark: isDark,
-                            screenWidth: screenWidth,
-                            screenHeight: screenHeight,
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              SortButton(
+                                label: 'Sort: Products',
+                                isActive: sortType == 'Products',
+                                onTap: () {
+                                  setState(() => sortType = 'Products');
+                                  sortCategories();
+                                },
+                                isDark: isDark,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight,
+                              ),
+                              SizedBox(width: screenWidth * 0.02),
+                              SortButton(
+                                label: 'Sort: Alphabetical',
+                                isActive: sortType == 'Alphabetical',
+                                onTap: () {
+                                  setState(() => sortType = 'Alphabetical');
+                                  sortCategories();
+                                },
+                                isDark: isDark,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight,
+                              ),
+                              SizedBox(width: screenWidth * 0.02),
+                              SortButton(
+                                label: 'Date Added',
+                                isActive: sortType == 'Date Added',
+                                onTap: () {
+                                  setState(() => sortType = 'Date Added');
+                                  sortCategories();
+                                },
+                                isDark: isDark,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        SizedBox(
+                          height: viewInsets.bottom > 0 ? viewInsets.bottom : 0,
+                        ),
+                      ],
                     ),
-                    SizedBox(
-                      height: viewInsets.bottom > 0 ? viewInsets.bottom : 0,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          displayedCategories.isEmpty
-              ? SliverFillRemaining(
-                  child: CategoryEmptyState(
-                    isDark: isDark,
-                    screenWidth: screenWidth,
-                    screenHeight: screenHeight,
-                  ),
-                )
-              : SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final category = displayedCategories[index];
-                        final productCount = getProductCount(category.id);
+              x.isEmpty
+                  ? SliverFillRemaining(
+                      child: CategoryEmptyState(
+                        isDark: isDark,
+                        screenWidth: screenWidth,
+                        screenHeight: screenHeight,
+                      ),
+                    )
+                  : SliverPadding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                      ),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final category = x[index];
+                            final productCount = getProductCount(category.id);
 
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: screenHeight * 0.015,
-                          ),
-                          child: CategoryCard(
-                            category: category,
-                            productCount: productCount,
-                            isDark: isDark,
-                            screenWidth: screenWidth,
-                            screenHeight: screenHeight,
-                            onEdit: () => showEditCategoryBottomSheet(category),
-                            onDelete: () => deleteCategory(category),
-                          ),
-                        );
-                      },
-                      childCount: displayedCategories.length,
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom: screenHeight * 0.015,
+                              ),
+                              child: CategoryCard(
+                                category: category,
+                                productCount: productCount,
+                                isDark: isDark,
+                                screenWidth: screenWidth,
+                                screenHeight: screenHeight,
+                                onEdit: () =>
+                                    showEditCategoryBottomSheet(category),
+                                onDelete: () => deleteCategory(category),
+                              ),
+                            );
+                          },
+                          childCount: x.length,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-        ],
+            ],
+          );
+        },
+        error: (e, s) => Center(
+          child: Text(
+            e.toString(),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        loading: () {
+          return CircularProgressIndicator();
+        },
       ),
     );
   }
