@@ -9,33 +9,33 @@ part of 'category_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(CategroyNotifier)
-const categroyProvider = CategroyNotifierProvider._();
+@ProviderFor(CategoryNotifier)
+const categoryProvider = CategoryNotifierProvider._();
 
-final class CategroyNotifierProvider
-    extends $AsyncNotifierProvider<CategroyNotifier, List<Category>> {
-  const CategroyNotifierProvider._()
+final class CategoryNotifierProvider
+    extends $AsyncNotifierProvider<CategoryNotifier, List<Category>> {
+  const CategoryNotifierProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'categroyProvider',
+        name: r'categoryProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$categroyNotifierHash();
+  String debugGetCreateSourceHash() => _$categoryNotifierHash();
 
   @$internal
   @override
-  CategroyNotifier create() => CategroyNotifier();
+  CategoryNotifier create() => CategoryNotifier();
 }
 
-String _$categroyNotifierHash() => r'7a567de168296c207f45f758c84dfbd154f0719e';
+String _$categoryNotifierHash() => r'd58d51b171ed066533346fdd1fa0dddbb7bbbdd2';
 
-abstract class _$CategroyNotifier extends $AsyncNotifier<List<Category>> {
+abstract class _$CategoryNotifier extends $AsyncNotifier<List<Category>> {
   FutureOr<List<Category>> build();
   @$mustCallSuper
   @override

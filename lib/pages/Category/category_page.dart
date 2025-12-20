@@ -20,16 +20,7 @@ class CategoryPage extends ConsumerStatefulWidget {
 }
 
 class _CategoryPageState extends ConsumerState<CategoryPage> {
-  String _sortType = 'Products';
-  List<Category> _displayedCategories = [];
   final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _displayedCategories = testCategories;
-    _sortCategories();
-  }
 
   @override
   void dispose() {
@@ -37,167 +28,180 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     super.dispose();
   }
 
-  void _sortCategories() {
-    final sorted = List<Category>.from(_displayedCategories);
-
-    switch (_sortType) {
-      case 'Products':
-        sorted.sort((a, b) {
-          final aCount = testProducts.where((p) => p.categoryId == a.id).length;
-          final bCount = testProducts.where((p) => p.categoryId == b.id).length;
-          return bCount.compareTo(aCount);
-        });
-        break;
-      case 'Alphabetical':
-        sorted.sort((a, b) => a.name.compareTo(b.name));
-        break;
-      case 'Date Added':
-        break;
-    }
-
-    setState(() {
-      _displayedCategories = sorted;
-    });
-  }
-
-  void _filterCategories(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _displayedCategories = testCategories;
-      } else {
-        _displayedCategories = testCategories
-            .where(
-              (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
-            )
-            .toList();
-      }
-      _sortCategories();
-    });
-  }
-
-  void _clearSearch() {
-    _searchController.clear();
-    _filterCategories('');
-  }
-
-  int _getProductCount(String categoryId) {
-    return testProducts.where((p) => p.categoryId == categoryId).length;
-  }
-
-  int _getTotalProducts() => testProducts.length;
-  int _getTotalCategories() => testCategories.length;
-  int _getTotalSubcategories() => testSubCategories.length;
-
-  void _showAddCategoryBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const CategoryFormBottomSheet(),
-    ).then((result) {
-      if (result != null && result['name'] != null && result['icon'] != null) {
-        final newCategory = Category.create(
-          name: result['name'] as String,
-          icon: result['icon'] as IconData,
-        );
-        setState(() {
-          testCategories.add(newCategory);
-          _displayedCategories = testCategories;
-          _sortCategories();
-        });
-      }
-    });
-  }
-
-  void _showEditCategoryBottomSheet(Category category) {
-    final categoryToEdit = testCategories.firstWhere(
-      (c) => c.id == category.id,
-      orElse: () => category,
-    );
-
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => CategoryFormBottomSheet(category: categoryToEdit),
-    ).then((result) {
-      if (result != null && result['name'] != null && result['icon'] != null) {
-        final index = testCategories.indexWhere((c) => c.id == category.id);
-        if (index != -1) {
-          setState(() {
-            testCategories[index] = Category(
-              id: category.id,
-              name: result['name'] as String,
-              icon: result['icon'] as IconData,
-            );
-            final displayedIndex = _displayedCategories.indexWhere(
-              (c) => c.id == category.id,
-            );
-            if (displayedIndex != -1) {
-              _displayedCategories[displayedIndex] = testCategories[index];
-            }
-            _sortCategories();
-          });
-        }
-      }
-    });
-  }
-
-  void _deleteCategory(Category category) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        final screenWidth = MediaQuery.of(context).size.width;
-        return AlertDialog(
-          backgroundColor: isDark ? Colors.grey[800] : Colors.white,
-          title: Text(
-            'Delete Category',
-            style: TextStyle(
-              fontSize: screenWidth * 0.045,
-              color: isDark ? Colors.white : Colors.grey[900],
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to delete "${category.name}"?',
-            style: TextStyle(
-              fontSize: screenWidth * 0.04,
-              color: isDark ? Colors.grey[300] : Colors.grey[700],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  testCategories.removeWhere((c) => c.id == category.id);
-                  _displayedCategories.removeWhere((c) => c.id == category.id);
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    String sortType = 'Products';
+    List<Category> displayedCategories = [];
+
+    void sortCategories() {
+      final sorted = List<Category>.from(displayedCategories);
+
+      switch (sortType) {
+        case 'Products':
+          sorted.sort((a, b) {
+            final aCount = testProducts
+                .where((p) => p.categoryId == a.id)
+                .length;
+            final bCount = testProducts
+                .where((p) => p.categoryId == b.id)
+                .length;
+            return bCount.compareTo(aCount);
+          });
+          break;
+        case 'Alphabetical':
+          sorted.sort((a, b) => a.name.compareTo(b.name));
+          break;
+        case 'Date Added':
+          break;
+      }
+
+      setState(() {
+        displayedCategories = sorted;
+      });
+    }
+
+    void filterCategories(String query) {
+      setState(() {
+        if (query.isEmpty) {
+          displayedCategories = testCategories;
+        } else {
+          displayedCategories = testCategories
+              .where(
+                (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
+              )
+              .toList();
+        }
+        sortCategories();
+      });
+    }
+
+    void clearSearch() {
+      _searchController.clear();
+      filterCategories('');
+    }
+
+    int getProductCount(String categoryId) {
+      return testProducts.where((p) => p.categoryId == categoryId).length;
+    }
+
+    int getTotalProducts() => testProducts.length;
+    int getTotalCategories() => testCategories.length;
+    int getTotalSubcategories() => testSubCategories.length;
+
+    void showAddCategoryBottomSheet() {
+      showModalBottomSheet(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => const CategoryFormBottomSheet(),
+      ).then((result) {
+        if (result != null &&
+            result['name'] != null &&
+            result['icon'] != null) {
+          final newCategory = Category.create(
+            name: result['name'] as String,
+            icon: result['icon'] as IconData,
+          );
+          setState(() {
+            testCategories.add(newCategory);
+            displayedCategories = testCategories;
+            sortCategories();
+          });
+        }
+      });
+    }
+
+    void showEditCategoryBottomSheet(Category category) {
+      final categoryToEdit = testCategories.firstWhere(
+        (c) => c.id == category.id,
+        orElse: () => category,
+      );
+
+      showModalBottomSheet(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => CategoryFormBottomSheet(category: categoryToEdit),
+      ).then((result) {
+        if (result != null &&
+            result['name'] != null &&
+            result['icon'] != null) {
+          final index = testCategories.indexWhere((c) => c.id == category.id);
+          if (index != -1) {
+            setState(() {
+              testCategories[index] = Category(
+                id: category.id,
+                name: result['name'] as String,
+                icon: result['icon'] as IconData,
+              );
+              final displayedIndex = displayedCategories.indexWhere(
+                (c) => c.id == category.id,
+              );
+              if (displayedIndex != -1) {
+                displayedCategories[displayedIndex] = testCategories[index];
+              }
+              sortCategories();
+            });
+          }
+        }
+      });
+    }
+
+    void deleteCategory(Category category) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final screenWidth = MediaQuery.of(context).size.width;
+          return AlertDialog(
+            backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+            title: Text(
+              'Delete Category',
+              style: TextStyle(
+                fontSize: screenWidth * 0.045,
+                color: isDark ? Colors.white : Colors.grey[900],
+              ),
+            ),
+            content: Text(
+              'Are you sure you want to delete "${category.name}"?',
+              style: TextStyle(
+                fontSize: screenWidth * 0.04,
+                color: isDark ? Colors.grey[300] : Colors.grey[700],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    testCategories.removeWhere((c) => c.id == category.id);
+                    displayedCategories.removeWhere(
+                      (c) => c.id == category.id,
+                    );
+                  });
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
     final screenHeight = mediaQuery.size.height;
@@ -213,7 +217,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
 
     return PageScaffold(
       title: 'Categories',
-      onAction: _showAddCategoryBottomSheet,
+      onAction: showAddCategoryBottomSheet,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -246,21 +250,21 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         StatCard(
-                          value: _getTotalProducts().toString(),
+                          value: getTotalProducts().toString(),
                           label: 'Total Products',
                           isDark: isDark,
                           screenWidth: screenWidth,
                           screenHeight: screenHeight,
                         ),
                         StatCard(
-                          value: _getTotalCategories().toString(),
+                          value: getTotalCategories().toString(),
                           label: 'Total Categories',
                           isDark: isDark,
                           screenWidth: screenWidth,
                           screenHeight: screenHeight,
                         ),
                         StatCard(
-                          value: _getTotalSubcategories().toString(),
+                          value: getTotalSubcategories().toString(),
                           label: 'Total Subcategories',
                           isDark: isDark,
                           screenWidth: screenWidth,
@@ -291,7 +295,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                         borderRadius: BorderRadius.circular(screenWidth * 0.03),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -302,7 +306,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                         builder: (context, value, child) {
                           return TextField(
                             controller: _searchController,
-                            onChanged: _filterCategories,
+                            onChanged: filterCategories,
                             decoration: InputDecoration(
                               hintText: 'Search Categories...',
                               hintStyle: TextStyle(color: Colors.grey[400]),
@@ -316,7 +320,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                                         Icons.close,
                                         color: Colors.grey[400],
                                       ),
-                                      onPressed: _clearSearch,
+                                      onPressed: clearSearch,
                                     )
                                   : null,
                               border: InputBorder.none,
@@ -336,10 +340,10 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                         children: [
                           SortButton(
                             label: 'Sort: Products',
-                            isActive: _sortType == 'Products',
+                            isActive: sortType == 'Products',
                             onTap: () {
-                              setState(() => _sortType = 'Products');
-                              _sortCategories();
+                              setState(() => sortType = 'Products');
+                              sortCategories();
                             },
                             isDark: isDark,
                             screenWidth: screenWidth,
@@ -348,10 +352,10 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                           SizedBox(width: screenWidth * 0.02),
                           SortButton(
                             label: 'Sort: Alphabetical',
-                            isActive: _sortType == 'Alphabetical',
+                            isActive: sortType == 'Alphabetical',
                             onTap: () {
-                              setState(() => _sortType = 'Alphabetical');
-                              _sortCategories();
+                              setState(() => sortType = 'Alphabetical');
+                              sortCategories();
                             },
                             isDark: isDark,
                             screenWidth: screenWidth,
@@ -360,10 +364,10 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                           SizedBox(width: screenWidth * 0.02),
                           SortButton(
                             label: 'Date Added',
-                            isActive: _sortType == 'Date Added',
+                            isActive: sortType == 'Date Added',
                             onTap: () {
-                              setState(() => _sortType = 'Date Added');
-                              _sortCategories();
+                              setState(() => sortType = 'Date Added');
+                              sortCategories();
                             },
                             isDark: isDark,
                             screenWidth: screenWidth,
@@ -380,7 +384,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
               ),
             ),
           ),
-          _displayedCategories.isEmpty
+          displayedCategories.isEmpty
               ? SliverFillRemaining(
                   child: CategoryEmptyState(
                     isDark: isDark,
@@ -393,8 +397,8 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final category = _displayedCategories[index];
-                        final productCount = _getProductCount(category.id);
+                        final category = displayedCategories[index];
+                        final productCount = getProductCount(category.id);
 
                         return Padding(
                           padding: EdgeInsets.only(
@@ -406,13 +410,12 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                             isDark: isDark,
                             screenWidth: screenWidth,
                             screenHeight: screenHeight,
-                            onEdit: () =>
-                                _showEditCategoryBottomSheet(category),
-                            onDelete: () => _deleteCategory(category),
+                            onEdit: () => showEditCategoryBottomSheet(category),
+                            onDelete: () => deleteCategory(category),
                           ),
                         );
                       },
-                      childCount: _displayedCategories.length,
+                      childCount: displayedCategories.length,
                     ),
                   ),
                 ),

@@ -1,8 +1,17 @@
 import 'package:de_helper/data/repos/interface/category_repository.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../models/category.dart';
 import '../db/app_database.dart' hide Category;
 import '../db/dto/category_dto.dart';
+
+part 'category_repository_impl.g.dart';
+
+@Riverpod(keepAlive: true)
+CategoryRepositoryImpl categoryRepo(Ref ref) {
+  final db = ref.watch(getDbProvider);
+  return CategoryRepositoryImpl(db);
+}
 
 class CategoryRepositoryImpl implements CategoryRepository {
   final AppDatabase _db;
@@ -12,6 +21,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
   @override
   Future<List<Category>> getAll() async {
     final categories = await _db.select(_db.categories).get();
+    print('fetched all category succesfully');
     return categories.map((c) => c.toDomain()).toList();
   }
 

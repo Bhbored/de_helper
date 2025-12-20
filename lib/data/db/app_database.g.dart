@@ -2744,3 +2744,51 @@ class $AppDatabaseManager {
   $$ProductsTableTableManager get products =>
       $$ProductsTableTableManager(_db, _db.products);
 }
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(getDb)
+const getDbProvider = GetDbProvider._();
+
+final class GetDbProvider
+    extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
+    with $Provider<AppDatabase> {
+  const GetDbProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'getDbProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$getDbHash();
+
+  @$internal
+  @override
+  $ProviderElement<AppDatabase> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AppDatabase create(Ref ref) {
+    return getDb(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppDatabase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppDatabase>(value),
+    );
+  }
+}
+
+String _$getDbHash() => r'b00ef3d132ff70ab84fd374f92590a2e732f621f';

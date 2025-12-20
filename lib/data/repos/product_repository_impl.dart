@@ -1,7 +1,16 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../models/product.dart';
 import '../db/app_database.dart' hide Product;
 import '../db/dto/product_dto.dart';
 import 'interface/product_repository.dart';
+part 'product_repository_impl.g.dart';
+
+@Riverpod(keepAlive: true)
+ProductRepositoryImpl productRepo(Ref ref) {
+  final db = ref.watch(getDbProvider);
+  return ProductRepositoryImpl(db);
+}
 
 class ProductRepositoryImpl implements ProductRepository {
   final AppDatabase _db;
