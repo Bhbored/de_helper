@@ -1,6 +1,5 @@
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/product_provider.dart';
-import 'package:de_helper/test_data/test_categories.dart';
 import 'package:de_helper/test_data/test_subcategories.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/category.dart';
@@ -22,7 +21,8 @@ class CategoryPage extends ConsumerStatefulWidget {
 
 class _CategoryPageState extends ConsumerState<CategoryPage> {
   final TextEditingController _searchController = TextEditingController();
-
+  Category? copied;
+  int? deleteIndex;
   @override
   void dispose() {
     _searchController.dispose();
@@ -33,11 +33,9 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
   Widget build(BuildContext context) {
     String sortType = 'Products';
     final categories = ref.watch(categoryProvider);
-    List<Category> displayedCategories = [];
     final products = ref.watch(prodcutProvider);
     void sortCategories() {
       final sorted = categories.value!;
-
       switch (sortType) {
         case 'Products':
           sorted.sort((a, b) {
@@ -56,22 +54,15 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
         case 'Date Added':
           break;
       }
-
-      setState(() {
-        displayedCategories = sorted;
-      });
+      ref.read(categoryProvider.notifier).sortCategories(sorted);
     }
 
     void filterCategories(String query) {
       setState(() {
         if (query.isEmpty) {
-          displayedCategories = categories.value!;
+          ref.read(categoryProvider.notifier).refreshCategories();
         } else {
-          displayedCategories = categories.value!
-              .where(
-                (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
-              )
-              .toList();
+          ref.read(categoryProvider.notifier).filterByName(query);
         }
         sortCategories();
       });
@@ -177,31 +168,11 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
               ),
               TextButton(
                 onPressed: () {
-                  Category cat = category.copyWith();
-                  final index = ref
+                  copied = category;
+                  deleteIndex = ref
                       .read(categoryProvider.notifier)
-                      .getIndex(cat);
+                      .getIndex(copied!);
                   ref.read(categoryProvider.notifier).deleteCategory(id);
-                  ref.listen(categoryProvider, (previous, next) {
-                    if (next != previous) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Category "${cat.name}" deleted',
-                          ),
-                          action: SnackBarAction(
-                            label: 'Undo',
-                            onPressed: () {
-                              ref
-                                  .read(categoryProvider.notifier)
-                                  .addInPlace(cat, index);
-                            },
-                          ),
-                          duration: const Duration(seconds: 5),
-                        ),
-                      );
-                    }
-                  });
                   Navigator.of(context).pop();
                 },
                 child: const Text(

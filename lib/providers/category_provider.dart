@@ -80,4 +80,18 @@ class CategoryNotifier extends _$CategoryNotifier {
     final index = current.indexOf(cat);
     return index;
   }
+
+  void sortCategories(List<Category> newList) {
+    state = AsyncValue.data(newList);
+  }
+
+  void filterByName(String query) {
+    final current = state.value ?? [];
+    final newList = current
+        .where(
+          (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
+        )
+        .toList();
+    state = AsyncValue.data(newList);
+  }
 }

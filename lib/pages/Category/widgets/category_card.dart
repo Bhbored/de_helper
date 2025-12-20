@@ -1,8 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/category.dart';
 import 'package:de_helper/pages/Product/product_page.dart';
 
-class CategoryCard extends StatelessWidget {
+class CategoryCard extends StatefulWidget {
   final Category category;
   final int productCount;
   final bool isDark;
@@ -23,72 +24,72 @@ class CategoryCard extends StatelessWidget {
   });
 
   @override
+  State<CategoryCard> createState() => _CategoryCardState();
+}
+
+class _CategoryCardState extends State<CategoryCard> {
+  @override
   Widget build(BuildContext context) {
-    final iconSize = screenWidth * 0.12;
-    final iconContainerSize = screenWidth * 0.13;
+    final iconSize = widget.screenWidth * 0.12;
+    final iconContainerSize = widget.screenWidth * 0.13;
 
     return Dismissible(
-      key: ValueKey(category.id),
+      key: ValueKey(widget.category.id),
       direction: DismissDirection.horizontal,
       background: Container(
         decoration: BoxDecoration(
-          color: isDark ? Colors.green[700] : Colors.blue,
-          borderRadius: BorderRadius.circular(screenWidth * 0.03),
+          color: widget.isDark ? Colors.green[700] : Colors.blue,
+          borderRadius: BorderRadius.circular(widget.screenWidth * 0.03),
         ),
         alignment: Alignment.centerLeft,
-        padding: EdgeInsets.only(left: screenWidth * 0.05),
+        padding: EdgeInsets.only(left: widget.screenWidth * 0.05),
         child: Icon(
           Icons.edit,
           color: Colors.white,
-          size: screenWidth * 0.06,
+          size: widget.screenWidth * 0.06,
         ),
       ),
       secondaryBackground: Container(
         decoration: BoxDecoration(
           color: Colors.red,
-          borderRadius: BorderRadius.circular(screenWidth * 0.03),
+          borderRadius: BorderRadius.circular(widget.screenWidth * 0.03),
         ),
         alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: screenWidth * 0.05),
+        padding: EdgeInsets.only(right: widget.screenWidth * 0.05),
         child: Icon(
           Icons.delete,
           color: Colors.white,
-          size: screenWidth * 0.06,
+          size: widget.screenWidth * 0.06,
         ),
       ),
       confirmDismiss: (direction) async {
-        if (direction == DismissDirection.startToEnd && onEdit != null) {
-          onEdit!();
+        if (direction == DismissDirection.startToEnd) {
+          if (widget.onEdit != null) {
+            widget.onEdit!();
+          }
           return false;
-        } else if (direction == DismissDirection.endToStart &&
-            onDelete != null) {
-          return await _showDeleteConfirmation(
-            context,
-            category.name,
-            isDark,
-            screenWidth,
-          );
+        } else if (direction == DismissDirection.endToStart) {
+          if (widget.onDelete != null) {
+            widget.onDelete!();
+          }
+          return false;
         }
         return false;
       },
-      onDismissed: (direction) {
-        if (direction == DismissDirection.endToStart && onDelete != null) {
-          onDelete!();
-        }
-      },
+      onDismissed: (_) {},
       child: InkWell(
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => ProductPage(category: category),
+              builder: (context) => ProductPage(category: widget.category),
             ),
           );
         },
-        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+        borderRadius: BorderRadius.circular(widget.screenWidth * 0.03),
         child: Container(
           decoration: BoxDecoration(
-            color: isDark ? Colors.grey[800] : Colors.white,
-            borderRadius: BorderRadius.circular(screenWidth * 0.03),
+            color: widget.isDark ? Colors.grey[800] : Colors.white,
+            borderRadius: BorderRadius.circular(widget.screenWidth * 0.03),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -99,37 +100,37 @@ class CategoryCard extends StatelessWidget {
           ),
           child: ListTile(
             contentPadding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04,
-              vertical: screenHeight * 0.01,
+              horizontal: widget.screenWidth * 0.04,
+              vertical: widget.screenHeight * 0.01,
             ),
             leading: Container(
               width: iconContainerSize,
               height: iconContainerSize,
               decoration: BoxDecoration(
-                color: isDark
+                color: widget.isDark
                     ? Colors.green[900]!.withOpacity(0.3)
                     : Colors.blue[100],
-                borderRadius: BorderRadius.circular(screenWidth * 0.025),
+                borderRadius: BorderRadius.circular(widget.screenWidth * 0.025),
               ),
               child: Icon(
-                category.icon,
-                color: isDark ? Colors.green[300] : Colors.blue[700],
+                widget.category.icon,
+                color: widget.isDark ? Colors.green[300] : Colors.blue[700],
                 size: iconSize,
               ),
             ),
             title: Text(
-              category.name,
+              widget.category.name,
               style: TextStyle(
-                fontSize: screenWidth * 0.04,
+                fontSize: widget.screenWidth * 0.04,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.grey[900],
+                color: widget.isDark ? Colors.white : Colors.grey[900],
               ),
             ),
             subtitle: Text(
-              '$productCount Products',
+              '${widget.productCount} Products',
               style: TextStyle(
-                fontSize: screenWidth * 0.035,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                fontSize: widget.screenWidth * 0.035,
+                color: widget.isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
           ),
@@ -137,53 +138,29 @@ class CategoryCard extends StatelessWidget {
       ),
     );
   }
-
-  Future<bool> _showDeleteConfirmation(
-    BuildContext context,
-    String categoryName,
-    bool isDark,
-    double screenWidth,
-  ) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: isDark ? Colors.grey[800] : Colors.white,
-          title: Text(
-            'Delete Category',
-            style: TextStyle(
-              fontSize: screenWidth * 0.045,
-              color: isDark ? Colors.white : Colors.grey[900],
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to delete "$categoryName"?',
-            style: TextStyle(
-              fontSize: screenWidth * 0.04,
-              color: isDark ? Colors.grey[300] : Colors.grey[700],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-    return result ?? false;
-  }
 }
+
+
+// ref.listen(categoryProvider, (previous, next) {
+    //   if (copied != null &&
+    //       next.isLoading == false &&
+    //       previous?.isLoading == true) {
+    //     // Only show snackbar after a successful deletion
+    //     final categoryToShow = copied!;
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(
+    //         content: Text('Category "${categoryToShow.name}" deleted'),
+    //         action: SnackBarAction(
+    //           label: 'Undo',
+    //           onPressed: () {
+    //             ref
+    //                 .read(categoryProvider.notifier)
+    //                 .addInPlace(categoryToShow, deleteIndex!);
+    //             copied = null;
+    //           },
+    //         ),
+    //         duration: const Duration(seconds: 3),
+    //       ),
+    //     );
+    //   }
+    // });
