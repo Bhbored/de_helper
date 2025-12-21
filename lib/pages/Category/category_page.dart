@@ -147,6 +147,49 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     }
 
     void deleteCategory(Category category) {
+      final productCount = getProductCount(category.id);
+
+      if (productCount > 0) {
+        // Show error dialog if category has products
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final screenWidth = MediaQuery.of(context).size.width;
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+              title: Text(
+                'Cannot Delete Category',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.045,
+                  color: isDark ? Colors.white : Colors.grey[900],
+                ),
+              ),
+              content: Text(
+                'Category "${category.name}" cannot be deleted because it has $productCount product${productCount == 1 ? '' : 's'} associated with it.\n\nPlease remove or reassign all products before deleting this category.',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.04,
+                  color: isDark ? Colors.grey[300] : Colors.grey[700],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+        return;
+      }
+
+      // Proceed with deletion if no products
       final id = category.id;
       showDialog(
         context: context,
@@ -200,9 +243,90 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     }
 
     void _handleDeleteSelected(List<Category> selectedCategories) {
-      // This method will be called with the selected categories
-      // User will implement the actual deletion logic
-      // For now, just clear selection
+      // Filter out categories that have products
+      final categoriesWithProducts = selectedCategories
+          .where((cat) => getProductCount(cat.id) > 0)
+          .toList();
+      final categoriesToDelete = selectedCategories
+          .where((cat) => getProductCount(cat.id) == 0)
+          .toList();
+
+      if (categoriesWithProducts.isNotEmpty) {
+        // Show error dialog if any selected categories have products
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final categoryNames = categoriesWithProducts
+            .map(
+              (cat) =>
+                  '${cat.name} (${getProductCount(cat.id)} product${getProductCount(cat.id) == 1 ? '' : 's'})',
+            )
+            .join('\n');
+
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+              title: Text(
+                'Cannot Delete Categories',
+                style: TextStyle(
+                  fontSize: screenWidth * 0.045,
+                  color: isDark ? Colors.white : Colors.grey[900],
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Text(
+                  'The following categories cannot be deleted because they have products associated with them:\n\n$categoryNames\n\nPlease remove or reassign all products before deleting these categories.',
+                  style: TextStyle(
+                    fontSize: screenWidth * 0.04,
+                    color: isDark ? Colors.grey[300] : Colors.grey[700],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+
+        // If some categories can be deleted, proceed with those
+        if (categoriesToDelete.isNotEmpty) {
+          // Remove categories that can't be deleted from selection
+          setState(() {
+            for (final cat in categoriesWithProducts) {
+              _selectedCategoryIds.remove(cat.id);
+            }
+          });
+
+          // Delete the categories that can be deleted
+          for (final category in categoriesToDelete) {
+            ref.read(categoryProvider.notifier).deleteCategory(category.id);
+          }
+
+          // Exit selection mode if all selected categories were processed
+          if (_selectedCategoryIds.isEmpty) {
+            setState(() {
+              _isSelectionMode = false;
+            });
+          }
+        }
+        return;
+      }
+
+      // All selected categories can be deleted
+      for (final category in selectedCategories) {
+        ref.read(categoryProvider.notifier).deleteCategory(category.id);
+      }
+
       setState(() {
         _selectedCategoryIds.clear();
         _isSelectionMode = false;

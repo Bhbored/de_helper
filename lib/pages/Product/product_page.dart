@@ -315,7 +315,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                         ),
                                         SizedBox(width: screenWidth * 0.06),
                                         Container(
-                                          width: screenWidth * 0.12,
+                                          width: screenWidth * 0.18,
                                           alignment: Alignment.center,
                                           child: Text(
                                             'Price',
@@ -328,7 +328,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: screenWidth * 0.20),
+                                        SizedBox(width: screenWidth * 0.12),
                                         Expanded(
                                           child: Text(
                                             'Barcode',
@@ -438,7 +438,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                           ),
                                           SizedBox(width: screenWidth * 0.06),
                                           Container(
-                                            width: screenWidth * 0.12,
+                                            width: screenWidth * 0.18,
                                             alignment: Alignment.center,
                                             child: Text(
                                               '\$${product.price.toStringAsFixed(2)}',
@@ -453,7 +453,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          SizedBox(width: screenWidth * 0.20),
+                                          SizedBox(width: screenWidth * 0.12),
                                           Expanded(
                                             child: Text(
                                               product.barcode,
