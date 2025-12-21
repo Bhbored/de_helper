@@ -8,6 +8,8 @@ class PageScaffold extends ConsumerWidget {
   final VoidCallback? onAction;
   final IconData? actionIcon;
   final Color? actionColor;
+  final bool showDrawer;
+  final IconData? titleIcon;
 
   const PageScaffold({
     super.key,
@@ -16,6 +18,8 @@ class PageScaffold extends ConsumerWidget {
     this.onAction,
     this.actionIcon,
     this.actionColor,
+    this.showDrawer = true,
+    this.titleIcon,
   });
 
   @override
@@ -24,15 +28,33 @@ class PageScaffold extends ConsumerWidget {
     final screenWidth = mediaQuery.size.width;
     final isDark = ref.watch(themeStateProvider);
 
+    // Try to find parent Scaffold with drawer BEFORE creating our own Scaffold
+    final parentScaffold = Scaffold.maybeOf(context);
+    final hasParentDrawer = parentScaffold?.hasDrawer ?? false;
+    // Store the parent scaffold state to use later
+    final parentScaffoldState = hasParentDrawer ? parentScaffold : null;
+
     return Scaffold(
       body: body,
       appBar: AppBar(
         centerTitle: true,
+        leading: (showDrawer && parentScaffoldState != null)
+            ? IconButton(
+                icon: Icon(
+                  Icons.menu,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+                onPressed: () {
+                  // Use the stored parent scaffold state to open the drawer
+                  parentScaffoldState.openDrawer();
+                },
+              )
+            : null,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.category,
+              titleIcon ?? Icons.category,
               color: isDark ? Colors.white : Colors.black,
             ),
             SizedBox(width: screenWidth * 0.02),
@@ -40,16 +62,9 @@ class PageScaffold extends ConsumerWidget {
               title ?? '',
               style: TextStyle(color: isDark ? Colors.white : Colors.black),
             ),
+            SizedBox(width: screenWidth * 0.10),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-            onPressed: () {
-              ref.read(themeStateProvider.notifier).toggle();
-            },
-          ),
-        ],
       ),
       floatingActionButton: onAction != null
           ? FloatingActionButton(

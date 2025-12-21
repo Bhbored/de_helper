@@ -33,6 +33,21 @@ class ProductDetailPage extends ConsumerWidget {
     }
   }
 
+  IconData? _getCategoryIcon(WidgetRef ref) {
+    final categories = ref.watch(categoryProvider);
+    if (categories.value == null || categories.value!.isEmpty) {
+      return null;
+    }
+    try {
+      final category = categories.value!.firstWhere(
+        (c) => c.id == product.categoryId,
+      );
+      return category.icon;
+    } catch (e) {
+      return null;
+    }
+  }
+
   String? _getSubCategoryName(WidgetRef ref) {
     if (product.subCategoryId == null) return null;
     final subcategories = ref.watch(subcategoryProvider);
@@ -112,6 +127,8 @@ class ProductDetailPage extends ConsumerWidget {
     print(product.toString());
     return PageScaffold(
       title: product.name,
+      titleIcon: _getCategoryIcon(ref),
+      showDrawer: false,
       body: ListView(
         padding: EdgeInsets.all(horizontalPadding),
         children: [

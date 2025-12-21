@@ -1,7 +1,6 @@
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/product_provider.dart';
 import 'package:de_helper/providers/subcategory_provider.dart';
-import 'package:de_helper/test_data/test_subcategories.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/category.dart';
 import 'package:de_helper/utility/theme_selector.dart';
@@ -25,6 +24,8 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
   Category? copied;
   int? deleteIndex;
   String sortType = 'Products';
+  bool _isSelectionMode = false;
+  final Set<String> _selectedCategoryIds = {};
 
   @override
   void dispose() {
@@ -198,6 +199,39 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       );
     }
 
+    void _handleDeleteSelected(List<Category> selectedCategories) {
+      // This method will be called with the selected categories
+      // User will implement the actual deletion logic
+      // For now, just clear selection
+      setState(() {
+        _selectedCategoryIds.clear();
+        _isSelectionMode = false;
+      });
+    }
+
+    void _toggleSelection(String categoryId) {
+      setState(() {
+        if (_selectedCategoryIds.contains(categoryId)) {
+          _selectedCategoryIds.remove(categoryId);
+          if (_selectedCategoryIds.isEmpty) {
+            _isSelectionMode = false;
+          }
+        } else {
+          _selectedCategoryIds.add(categoryId);
+          if (!_isSelectionMode) {
+            _isSelectionMode = true;
+          }
+        }
+      });
+    }
+
+    void _exitSelectionMode() {
+      setState(() {
+        _isSelectionMode = false;
+        _selectedCategoryIds.clear();
+      });
+    }
+
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
     final screenHeight = mediaQuery.size.height;
@@ -213,7 +247,8 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
 
     return PageScaffold(
       title: 'Categories',
-      onAction: showAddCategoryBottomSheet,
+      titleIcon: Icons.folder,
+      onAction: _isSelectionMode ? null : showAddCategoryBottomSheet,
 
       body: RefreshIndicator(
         onRefresh: () async {
@@ -373,6 +408,77 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                               ),
                             ],
                           ),
+                          if (_isSelectionMode &&
+                              _selectedCategoryIds.isNotEmpty) ...[
+                            SizedBox(height: screenHeight * 0.02),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding * 0.5,
+                                vertical: screenHeight * 0.015,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.grey[800]
+                                    : Colors.grey[100],
+                                borderRadius: BorderRadius.circular(
+                                  screenWidth * 0.02,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton(
+                                    onPressed: _exitSelectionMode,
+                                    child: Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.04,
+                                        color: isDark
+                                            ? Colors.grey[400]
+                                            : Colors.grey[600],
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_selectedCategoryIds.length} selected',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.grey[900],
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      final selectedCategories = x
+                                          .where(
+                                            (cat) => _selectedCategoryIds
+                                                .contains(cat.id),
+                                          )
+                                          .toList();
+                                      _handleDeleteSelected(selectedCategories);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: screenWidth * 0.06,
+                                        vertical: screenHeight * 0.015,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.04,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           SizedBox(width: screenWidth * 0.02),
                           SizedBox(
                             height: viewInsets.bottom > 0
@@ -401,20 +507,85 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                             (context, index) {
                               final category = x[index];
                               final productCount = getProductCount(category.id);
+                              final isSelected = _selectedCategoryIds.contains(
+                                category.id,
+                              );
 
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: screenHeight * 0.015,
-                                ),
-                                child: CategoryCard(
-                                  category: category,
-                                  productCount: productCount,
-                                  isDark: isDark,
-                                  screenWidth: screenWidth,
-                                  screenHeight: screenHeight,
-                                  onEdit: () =>
-                                      showEditCategoryBottomSheet(category),
-                                  onDelete: () => deleteCategory(category),
+                              return GestureDetector(
+                                onLongPress: () {
+                                  if (!_isSelectionMode) {
+                                    setState(() {
+                                      _isSelectionMode = true;
+                                      _selectedCategoryIds.add(category.id);
+                                    });
+                                  }
+                                },
+                                onTap: _isSelectionMode
+                                    ? () {
+                                        _toggleSelection(category.id);
+                                      }
+                                    : null,
+                                behavior: _isSelectionMode
+                                    ? HitTestBehavior.opaque
+                                    : HitTestBehavior.translucent,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: screenHeight * 0.015,
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      Opacity(
+                                        opacity: isSelected ? 0.5 : 1.0,
+                                        child: CategoryCard(
+                                          category: category,
+                                          productCount: productCount,
+                                          isDark: isDark,
+                                          screenWidth: screenWidth,
+                                          screenHeight: screenHeight,
+                                          onEdit: _isSelectionMode
+                                              ? null
+                                              : () =>
+                                                    showEditCategoryBottomSheet(
+                                                      category,
+                                                    ),
+                                          onDelete: _isSelectionMode
+                                              ? null
+                                              : () => deleteCategory(category),
+                                        ),
+                                      ),
+                                      if (_isSelectionMode)
+                                        Positioned(
+                                          top: screenWidth * 0.02,
+                                          right: screenWidth * 0.02,
+                                          child: Container(
+                                            width: screenWidth * 0.08,
+                                            height: screenWidth * 0.08,
+                                            decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? Colors.blue
+                                                  : Colors.transparent,
+                                              border: Border.all(
+                                                color: isSelected
+                                                    ? Colors.blue
+                                                    : Colors.grey,
+                                                width: 2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    screenWidth * 0.02,
+                                                  ),
+                                            ),
+                                            child: isSelected
+                                                ? Icon(
+                                                    Icons.check,
+                                                    color: Colors.white,
+                                                    size: screenWidth * 0.05,
+                                                  )
+                                                : null,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },

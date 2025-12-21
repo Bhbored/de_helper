@@ -1,5 +1,4 @@
 import 'package:de_helper/providers/measurement_provider.dart';
-import 'package:de_helper/test_data/test_measurements.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/measurement.dart';
 import 'package:de_helper/utility/theme_selector.dart';
@@ -19,6 +18,8 @@ class MeasurementPage extends ConsumerStatefulWidget {
 class _MeasurementPageState extends ConsumerState<MeasurementPage> {
   final TextEditingController _searchController = TextEditingController();
   MeasurementPreset? copied;
+  bool _isSelectionMode = false;
+  final Set<String> _selectedMeasurementIds = {};
   @override
   void dispose() {
     _searchController.dispose();
@@ -148,9 +149,43 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
       );
     }
 
+    void _handleDeleteSelected(List<MeasurementPreset> selectedMeasurements) {
+      // This method will be called with the selected measurements
+      // User will implement the actual deletion logic
+      // For now, just clear selection
+      setState(() {
+        _selectedMeasurementIds.clear();
+        _isSelectionMode = false;
+      });
+    }
+
+    void _toggleSelection(String measurementId) {
+      setState(() {
+        if (_selectedMeasurementIds.contains(measurementId)) {
+          _selectedMeasurementIds.remove(measurementId);
+          if (_selectedMeasurementIds.isEmpty) {
+            _isSelectionMode = false;
+          }
+        } else {
+          _selectedMeasurementIds.add(measurementId);
+          if (!_isSelectionMode) {
+            _isSelectionMode = true;
+          }
+        }
+      });
+    }
+
+    void _exitSelectionMode() {
+      setState(() {
+        _isSelectionMode = false;
+        _selectedMeasurementIds.clear();
+      });
+    }
+
     return PageScaffold(
       title: 'Measurements',
-      onAction: showAddMeasurementBottomSheet,
+      titleIcon: Icons.layers,
+      onAction: _isSelectionMode ? null : showAddMeasurementBottomSheet,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(measurementProvider);
@@ -256,6 +291,78 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                             },
                           ),
                         ),
+                        if (_isSelectionMode &&
+                            _selectedMeasurementIds.isNotEmpty) ...[
+                          SizedBox(height: verticalPadding),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding * 0.5,
+                              vertical: screenHeight * 0.015,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.grey[800]
+                                  : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(
+                                screenWidth * 0.02,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: _exitSelectionMode,
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${_selectedMeasurementIds.length} selected',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.04,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.grey[900],
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final selectedMeasurements =
+                                        displayedMeasurements.value!
+                                            .where(
+                                              (measurement) =>
+                                                  _selectedMeasurementIds
+                                                      .contains(measurement.id),
+                                            )
+                                            .toList();
+                                    _handleDeleteSelected(selectedMeasurements);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: screenWidth * 0.06,
+                                      vertical: screenHeight * 0.015,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         SizedBox(height: verticalPadding),
                       ],
                     ),
@@ -285,84 +392,155 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                           (context, index) {
                             final measurement =
                                 displayedMeasurements.value![index];
-                            return Card(
-                              key: ValueKey(measurement.id),
-                              color: isDark ? Colors.grey[800] : Colors.white,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  screenWidth * 0.03,
-                                ),
-                              ),
+                            final isSelected = _selectedMeasurementIds.contains(
+                              measurement.id,
+                            );
+                            return GestureDetector(
+                              onLongPress: () {
+                                if (!_isSelectionMode) {
+                                  setState(() {
+                                    _isSelectionMode = true;
+                                    _selectedMeasurementIds.add(measurement.id);
+                                  });
+                                }
+                              },
+                              onTap: _isSelectionMode
+                                  ? () {
+                                      _toggleSelection(measurement.id);
+                                    }
+                                  : null,
+                              behavior: _isSelectionMode
+                                  ? HitTestBehavior.opaque
+                                  : HitTestBehavior.translucent,
                               child: Stack(
                                 children: [
-                                  Padding(
-                                    padding: EdgeInsets.all(screenWidth * 0.02),
-                                    child: Center(
-                                      child: Text(
-                                        measurement.name,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: screenWidth * 0.035,
-                                          fontWeight: FontWeight.w500,
-                                          color: isDark
-                                              ? Colors.white
-                                              : Colors.grey[900],
+                                  Opacity(
+                                    opacity: isSelected ? 0.5 : 1.0,
+                                    child: Card(
+                                      key: ValueKey(measurement.id),
+                                      color: isDark
+                                          ? Colors.grey[800]
+                                          : Colors.white,
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          screenWidth * 0.03,
                                         ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          Padding(
+                                            padding: EdgeInsets.all(
+                                              screenWidth * 0.02,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                measurement.name,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontSize: screenWidth * 0.035,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : Colors.grey[900],
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ),
+                                          if (!_isSelectionMode) ...[
+                                            Positioned(
+                                              top: screenWidth * 0.01,
+                                              right: screenWidth * 0.01,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  showEditMeasurementBottomSheet(
+                                                    measurement,
+                                                  );
+                                                },
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(
+                                                    screenWidth * 0.015,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.edit,
+                                                    size: screenWidth * 0.06,
+                                                    color: isDark
+                                                        ? Colors.green[300]
+                                                        : Colors.blue,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: screenWidth * 0.01,
+                                              right: screenWidth * 0.01,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  final measurementId =
+                                                      measurement.id;
+                                                  final currentMeasurement =
+                                                      displayedMeasurements
+                                                          .value!
+                                                          .firstWhere(
+                                                            (m) =>
+                                                                m.id ==
+                                                                measurementId,
+                                                            orElse: () =>
+                                                                measurement,
+                                                          );
+                                                  deleteMeasurement(
+                                                    currentMeasurement,
+                                                  );
+                                                },
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(
+                                                    screenWidth * 0.015,
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.delete,
+                                                    size: screenWidth * 0.06,
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  Positioned(
-                                    top: screenWidth * 0.01,
-                                    right: screenWidth * 0.01,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        showEditMeasurementBottomSheet(
-                                          measurement,
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: EdgeInsets.all(
-                                          screenWidth * 0.015,
+                                  if (_isSelectionMode)
+                                    Positioned(
+                                      top: screenWidth * 0.02,
+                                      right: screenWidth * 0.02,
+                                      child: Container(
+                                        width: screenWidth * 0.08,
+                                        height: screenWidth * 0.08,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? Colors.blue
+                                              : Colors.transparent,
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? Colors.blue
+                                                : Colors.grey,
+                                            width: 2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            screenWidth * 0.02,
+                                          ),
                                         ),
-                                        child: Icon(
-                                          Icons.edit,
-                                          size: screenWidth * 0.06,
-                                          color: isDark
-                                              ? Colors.green[300]
-                                              : Colors.blue,
-                                        ),
+                                        child: isSelected
+                                            ? Icon(
+                                                Icons.check,
+                                                color: Colors.white,
+                                                size: screenWidth * 0.05,
+                                              )
+                                            : null,
                                       ),
                                     ),
-                                  ),
-                                  Positioned(
-                                    bottom: screenWidth * 0.01,
-                                    right: screenWidth * 0.01,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        final measurementId = measurement.id;
-                                        final currentMeasurement =
-                                            displayedMeasurements.value!
-                                                .firstWhere(
-                                                  (m) => m.id == measurementId,
-                                                  orElse: () => measurement,
-                                                );
-                                        deleteMeasurement(currentMeasurement);
-                                      },
-                                      child: Padding(
-                                        padding: EdgeInsets.all(
-                                          screenWidth * 0.015,
-                                        ),
-                                        child: Icon(
-                                          Icons.delete,
-                                          size: screenWidth * 0.06,
-                                          color: Colors.red,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
                                 ],
                               ),
                             );

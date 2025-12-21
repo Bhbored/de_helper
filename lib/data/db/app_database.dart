@@ -37,6 +37,14 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
   );
+
+  Future<void> deleteDatabase() async {
+    await delete(categories).go();
+    await delete(subCategories).go();
+    await delete(colorPresets).go();
+    await delete(measurementPresets).go();
+    await delete(products).go();
+  }
 }
 
 LazyDatabase _openConnection() {

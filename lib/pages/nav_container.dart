@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:de_helper/pages/Category/category_page.dart';
 import 'package:de_helper/pages/Subcategory/subcategory_page.dart';
 import 'package:de_helper/pages/Measurement/measurement_page.dart';
 import 'package:de_helper/pages/Color/color_page.dart';
+import 'package:de_helper/widgets/main_drawer.dart';
 
-class NavContainer extends StatefulWidget {
+class NavContainer extends ConsumerStatefulWidget {
   const NavContainer({super.key});
 
   @override
-  State<NavContainer> createState() => _NavContainerState();
+  ConsumerState<NavContainer> createState() => _NavContainerState();
 }
 
-class _NavContainerState extends State<NavContainer> {
+class _NavContainerState extends ConsumerState<NavContainer> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
@@ -21,6 +23,12 @@ class _NavContainerState extends State<NavContainer> {
     const ColorPage(),
   ];
 
+  void setScreen(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
@@ -28,6 +36,9 @@ class _NavContainerState extends State<NavContainer> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      drawer: MainDrawer(
+        selectScreen: setScreen,
+      ),
       body: SafeArea(
         child: _pages[_currentIndex],
       ),

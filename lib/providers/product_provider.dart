@@ -3,7 +3,7 @@ import 'package:de_helper/models/product.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'product_provider.g.dart';
 
-@Riverpod(keepAlive: true)
+@riverpod
 class ProdcutNotifier extends _$ProdcutNotifier {
   ProductRepositoryImpl get _repo => ref.read(productRepoProvider);
   @override

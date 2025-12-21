@@ -1,5 +1,6 @@
 import 'package:de_helper/providers/helpers_providers.dart';
 import 'package:de_helper/providers/product_provider.dart';
+import 'package:de_helper/providers/category_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/product.dart';
 import 'package:de_helper/models/category.dart';
@@ -181,9 +182,30 @@ class _ProductPageState extends ConsumerState<ProductPage> {
 
     final title = getTitle();
 
+    // Get category icon
+    IconData? categoryIcon;
+    if (widget.category != null) {
+      categoryIcon = widget.category!.icon;
+    } else if (widget.subCategory != null) {
+      // Get parent category icon from subcategory
+      final categories = ref.watch(categoryProvider);
+      if (categories.value != null) {
+        try {
+          final parentCategory = categories.value!.firstWhere(
+            (c) => c.id == widget.subCategory!.categoryId,
+          );
+          categoryIcon = parentCategory.icon;
+        } catch (e) {
+          categoryIcon = Icons.category;
+        }
+      }
+    }
+
     return PageScaffold(
       title: title,
+      titleIcon: categoryIcon,
       onAction: showAddProductBottomSheet,
+      showDrawer: false,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(prodcutProvider);

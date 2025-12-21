@@ -18,6 +18,8 @@ class ColorPage extends ConsumerStatefulWidget {
 class _ColorPageState extends ConsumerState<ColorPage> {
   final TextEditingController _searchController = TextEditingController();
   ColorPreset? copied;
+  bool _isSelectionMode = false;
+  final Set<String> _selectedColorIds = {};
   @override
   void dispose() {
     _searchController.dispose();
@@ -186,9 +188,43 @@ class _ColorPageState extends ConsumerState<ColorPage> {
       );
     }
 
+    void _handleDeleteSelected(List<ColorPreset> selectedColors) {
+      // This method will be called with the selected colors
+      // User will implement the actual deletion logic
+      // For now, just clear selection
+      setState(() {
+        _selectedColorIds.clear();
+        _isSelectionMode = false;
+      });
+    }
+
+    void _toggleSelection(String colorId) {
+      setState(() {
+        if (_selectedColorIds.contains(colorId)) {
+          _selectedColorIds.remove(colorId);
+          if (_selectedColorIds.isEmpty) {
+            _isSelectionMode = false;
+          }
+        } else {
+          _selectedColorIds.add(colorId);
+          if (!_isSelectionMode) {
+            _isSelectionMode = true;
+          }
+        }
+      });
+    }
+
+    void _exitSelectionMode() {
+      setState(() {
+        _isSelectionMode = false;
+        _selectedColorIds.clear();
+      });
+    }
+
     return PageScaffold(
       title: 'Colors',
-      onAction: showAddColorBottomSheet,
+      titleIcon: Icons.palette,
+      onAction: _isSelectionMode ? null : showAddColorBottomSheet,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(colorProvider);
@@ -294,6 +330,78 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                             },
                           ),
                         ),
+                        if (_isSelectionMode &&
+                            _selectedColorIds.isNotEmpty) ...[
+                          SizedBox(height: verticalPadding),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding * 0.5,
+                              vertical: screenHeight * 0.015,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.grey[800]
+                                  : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(
+                                screenWidth * 0.02,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: _exitSelectionMode,
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${_selectedColorIds.length} selected',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.04,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.grey[900],
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final selectedColors = displayedColors
+                                        .value!
+                                        .where(
+                                          (color) => _selectedColorIds.contains(
+                                            color.id,
+                                          ),
+                                        )
+                                        .toList();
+                                    _handleDeleteSelected(selectedColors);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: screenWidth * 0.06,
+                                      vertical: screenHeight * 0.015,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         SizedBox(height: verticalPadding),
                       ],
                     ),
@@ -323,145 +431,239 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                           (context, index) {
                             final colorPreset = displayedColors.value![index];
                             final color = hexToColor(colorPreset.hexCode);
-                            return Card(
-                              key: ValueKey(colorPreset.id),
-                              color: isDark ? Colors.grey[800] : Colors.white,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  screenWidth * 0.03,
-                                ),
-                              ),
+                            final isSelected = _selectedColorIds.contains(
+                              colorPreset.id,
+                            );
+                            return GestureDetector(
+                              onLongPress: () {
+                                if (!_isSelectionMode) {
+                                  setState(() {
+                                    _isSelectionMode = true;
+                                    _selectedColorIds.add(colorPreset.id);
+                                  });
+                                }
+                              },
+                              onTap: _isSelectionMode
+                                  ? () {
+                                      _toggleSelection(colorPreset.id);
+                                    }
+                                  : null,
+                              behavior: _isSelectionMode
+                                  ? HitTestBehavior.opaque
+                                  : HitTestBehavior.translucent,
                               child: Stack(
                                 children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(
-                                        screenWidth * 0.03,
+                                  Opacity(
+                                    opacity: isSelected ? 0.5 : 1.0,
+                                    child: Card(
+                                      key: ValueKey(colorPreset.id),
+                                      color: isDark
+                                          ? Colors.grey[800]
+                                          : Colors.white,
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          screenWidth * 0.03,
+                                        ),
                                       ),
-                                      color: color,
-                                    ),
-                                    margin: EdgeInsets.all(screenWidth * 0.02),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.all(screenWidth * 0.02),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: screenWidth * 0.02,
-                                              vertical: screenWidth * 0.01,
-                                            ),
+                                      child: Stack(
+                                        children: [
+                                          Container(
                                             decoration: BoxDecoration(
-                                              color: isDark
-                                                  ? Colors.black.withOpacity(
-                                                      0.5,
-                                                    )
-                                                  : Colors.white.withOpacity(
-                                                      0.9,
-                                                    ),
                                               borderRadius:
                                                   BorderRadius.circular(
-                                                    screenWidth * 0.02,
+                                                    screenWidth * 0.03,
                                                   ),
+                                              color: color,
                                             ),
-                                            child: Text(
-                                              colorPreset.displayLabel,
-                                              style: TextStyle(
-                                                fontSize: screenWidth * 0.032,
-                                                fontWeight: FontWeight.w600,
-                                                color: isDark
-                                                    ? Colors.white
-                                                    : Colors.grey[900],
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
+                                            margin: EdgeInsets.all(
+                                              screenWidth * 0.02,
                                             ),
                                           ),
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            GestureDetector(
-                                              onTap: () {
-                                                showEditColorBottomSheet(
-                                                  colorPreset,
-                                                );
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(
-                                                  screenWidth * 0.015,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: isDark
-                                                      ? Colors.black
-                                                            .withOpacity(
-                                                              0.5,
-                                                            )
-                                                      : Colors.white
-                                                            .withOpacity(
-                                                              0.9,
-                                                            ),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Icon(
-                                                  Icons.edit,
-                                                  size: screenWidth * 0.05,
-                                                  color: isDark
-                                                      ? Colors.green[300]
-                                                      : Colors.blue,
-                                                ),
-                                              ),
+                                          Padding(
+                                            padding: EdgeInsets.all(
+                                              screenWidth * 0.02,
                                             ),
-                                            SizedBox(
-                                              width: screenWidth * 0.015,
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Align(
+                                                  alignment: Alignment.topLeft,
+                                                  child: Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                          horizontal:
+                                                              screenWidth *
+                                                              0.02,
+                                                          vertical:
+                                                              screenWidth *
+                                                              0.01,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: isDark
+                                                          ? Colors.black
+                                                                .withOpacity(
+                                                                  0.5,
+                                                                )
+                                                          : Colors.white
+                                                                .withOpacity(
+                                                                  0.9,
+                                                                ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            screenWidth * 0.02,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      colorPreset.displayLabel,
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            screenWidth * 0.032,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: isDark
+                                                            ? Colors.white
+                                                            : Colors.grey[900],
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (!_isSelectionMode)
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          showEditColorBottomSheet(
+                                                            colorPreset,
+                                                          );
+                                                        },
+                                                        child: Container(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                screenWidth *
+                                                                    0.015,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: isDark
+                                                                ? Colors.black
+                                                                      .withOpacity(
+                                                                        0.5,
+                                                                      )
+                                                                : Colors.white
+                                                                      .withOpacity(
+                                                                        0.9,
+                                                                      ),
+                                                            shape:
+                                                                BoxShape.circle,
+                                                          ),
+                                                          child: Icon(
+                                                            Icons.edit,
+                                                            size:
+                                                                screenWidth *
+                                                                0.05,
+                                                            color: isDark
+                                                                ? Colors
+                                                                      .green[300]
+                                                                : Colors.blue,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        width:
+                                                            screenWidth * 0.015,
+                                                      ),
+                                                      GestureDetector(
+                                                        onTap: () {
+                                                          final colorId =
+                                                              colorPreset.id;
+                                                          final currentColor =
+                                                              displayedColors
+                                                                  .value!
+                                                                  .firstWhere(
+                                                                    (c) =>
+                                                                        c.id ==
+                                                                        colorId,
+                                                                    orElse: () =>
+                                                                        colorPreset,
+                                                                  );
+                                                          deleteColor(
+                                                            currentColor,
+                                                          );
+                                                        },
+                                                        child: Container(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                screenWidth *
+                                                                    0.015,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: isDark
+                                                                ? Colors.black
+                                                                      .withOpacity(
+                                                                        0.5,
+                                                                      )
+                                                                : Colors.white
+                                                                      .withOpacity(
+                                                                        0.9,
+                                                                      ),
+                                                            shape:
+                                                                BoxShape.circle,
+                                                          ),
+                                                          child: Icon(
+                                                            Icons.delete,
+                                                            size:
+                                                                screenWidth *
+                                                                0.05,
+                                                            color: Colors.red,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                              ],
                                             ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                final colorId = colorPreset.id;
-                                                final currentColor =
-                                                    displayedColors.value!
-                                                        .firstWhere(
-                                                          (c) =>
-                                                              c.id == colorId,
-                                                          orElse: () =>
-                                                              colorPreset,
-                                                        );
-                                                deleteColor(currentColor);
-                                              },
-                                              child: Container(
-                                                padding: EdgeInsets.all(
-                                                  screenWidth * 0.015,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: isDark
-                                                      ? Colors.black
-                                                            .withOpacity(
-                                                              0.5,
-                                                            )
-                                                      : Colors.white
-                                                            .withOpacity(
-                                                              0.9,
-                                                            ),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Icon(
-                                                  Icons.delete,
-                                                  size: screenWidth * 0.05,
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
+                                  if (_isSelectionMode)
+                                    Positioned(
+                                      top: screenWidth * 0.02,
+                                      right: screenWidth * 0.02,
+                                      child: Container(
+                                        width: screenWidth * 0.08,
+                                        height: screenWidth * 0.08,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? Colors.blue
+                                              : Colors.transparent,
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? Colors.blue
+                                                : Colors.grey,
+                                            width: 2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            screenWidth * 0.02,
+                                          ),
+                                        ),
+                                        child: isSelected
+                                            ? Icon(
+                                                Icons.check,
+                                                color: Colors.white,
+                                                size: screenWidth * 0.05,
+                                              )
+                                            : null,
+                                      ),
+                                    ),
                                 ],
                               ),
                             );
