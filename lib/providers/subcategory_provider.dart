@@ -3,7 +3,7 @@ import 'package:de_helper/models/subcategory.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'subcategory_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class SubcategoryNotifier extends _$SubcategoryNotifier {
   SubCategoryRepositoryImpl get _repository =>
       ref.read(subcategoryRepoProvider);

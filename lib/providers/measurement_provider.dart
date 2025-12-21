@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'measurement_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class MeasurementNotifier extends _$MeasurementNotifier {
   MeasurementPresetRepositoryImpl get _repo => ref.read(measurmentRepoProvider);
   @override

@@ -20,7 +20,7 @@ final class ColorNotifierProvider
         argument: null,
         retry: null,
         name: r'colorProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -33,7 +33,7 @@ final class ColorNotifierProvider
   ColorNotifier create() => ColorNotifier();
 }
 
-String _$colorNotifierHash() => r'a95647cb9794328ea428d9998673d1827b1ecc69';
+String _$colorNotifierHash() => r'c31e17fbcded70739746b5110c82fc3444e4f0bf';
 
 abstract class _$ColorNotifier extends $AsyncNotifier<List<ColorPreset>> {
   FutureOr<List<ColorPreset>> build();

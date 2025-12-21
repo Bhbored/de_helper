@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:de_helper/models/product.dart';
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/helpers_providers.dart';
@@ -25,13 +26,66 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
   String _sortType = 'Products';
   SubCategory? copied;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _isSelectionMode = false;
   final Set<String> _selectedSubcategoryIds = {};
+  bool _showScrollButton = false;
+  bool _isAtBottom = false;
+  Timer? _scrollHideTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _scrollHideTimer?.cancel();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    final isAtBottom = position.pixels >= position.maxScrollExtent - 50;
+    final isAtTop = position.pixels <= 50;
+    
+    setState(() {
+      _isAtBottom = isAtBottom;
+      _showScrollButton = !isAtTop;
+    });
+
+    _scrollHideTimer?.cancel();
+    _scrollHideTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        final currentPosition = _scrollController.position;
+        final currentIsAtBottom = currentPosition.pixels >= currentPosition.maxScrollExtent - 50;
+        final currentIsAtTop = currentPosition.pixels <= 50;
+        setState(() {
+          _isAtBottom = currentIsAtBottom;
+          _showScrollButton = !currentIsAtTop;
+        });
+      }
+    });
+  }
+
+  void _scrollToPosition() {
+    if (_isAtBottom) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -293,8 +347,11 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
               ref.read(subcategoryProvider.future);
               exitSelectionMode();
             },
-            child: CustomScrollView(
-              slivers: [
+            child: Stack(
+              children: [
+                CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
                 SliverAppBar(
                   expandedHeight: expandedHeight,
                   floating: false,
@@ -446,83 +503,6 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                               SizedBox(width: screenWidth * 0.02),
                             ],
                           ),
-                          if (_isSelectionMode &&
-                              _selectedSubcategoryIds.isNotEmpty) ...[
-                            SizedBox(height: screenHeight * 0.02),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding * 0.5,
-                                vertical: screenHeight * 0.015,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.grey[800]
-                                    : Colors.grey[100],
-                                borderRadius: BorderRadius.circular(
-                                  screenWidth * 0.02,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  TextButton(
-                                    onPressed: exitSelectionMode,
-                                    child: Text(
-                                      'Cancel',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
-                                        color: isDark
-                                            ? Colors.grey[400]
-                                            : Colors.grey[600],
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    '${_selectedSubcategoryIds.length} selected',
-                                    style: TextStyle(
-                                      fontSize: screenWidth * 0.04,
-                                      fontWeight: FontWeight.w600,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.grey[900],
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      final selectedSubcategories =
-                                          displayedSubcategories.value!
-                                              .where(
-                                                (subcategory) =>
-                                                    _selectedSubcategoryIds
-                                                        .contains(
-                                                          subcategory.id,
-                                                        ),
-                                              )
-                                              .toList();
-                                      handleDeleteSelected(
-                                        selectedSubcategories,
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: screenWidth * 0.06,
-                                        vertical: screenHeight * 0.015,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      'Delete',
-                                      style: TextStyle(
-                                        fontSize: screenWidth * 0.04,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
                           SizedBox(
                             height: viewInsets.bottom > 0
                                 ? viewInsets.bottom
@@ -533,6 +513,87 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                     ),
                   ),
                 ),
+                if (_isSelectionMode && _selectedSubcategoryIds.isNotEmpty)
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _SelectionHeaderDelegate(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalPadding,
+                          vertical: screenHeight * 0.015,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey[900] : Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              onPressed: exitSelectionMode,
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${_selectedSubcategoryIds.length} selected',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? Colors.white
+                                    : Colors.grey[900],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                final selectedSubcategories =
+                                    displayedSubcategories.value!
+                                        .where(
+                                          (subcategory) =>
+                                              _selectedSubcategoryIds
+                                                  .contains(
+                                                    subcategory.id,
+                                                  ),
+                                        )
+                                        .toList();
+                                handleDeleteSelected(
+                                  selectedSubcategories,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.06,
+                                  vertical: screenHeight * 0.015,
+                                ),
+                              ),
+                              child: Text(
+                                'Delete',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.04,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      height: screenHeight * 0.08,
+                    ),
+                  ),
                 displayedSubcategories.value!.isEmpty
                     ? SliverFillRemaining(
                         child: SubcategoryEmptyState(
@@ -643,6 +704,22 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                         ),
                       ),
               ],
+                ),
+                if (_showScrollButton && !_isSelectionMode)
+                  Positioned(
+                    left: screenWidth * 0.05,
+                    bottom: screenHeight * 0.02,
+                    child: FloatingActionButton(
+                      mini: true,
+                      onPressed: _scrollToPosition,
+                      backgroundColor: isDark ? Colors.green[700] : Colors.blue,
+                      child: Icon(
+                        _isAtBottom ? Icons.arrow_upward : Icons.arrow_downward,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           );
         },
@@ -657,5 +734,35 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
         },
       ),
     );
+  }
+}
+
+class _SelectionHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _SelectionHeaderDelegate({
+    required this.child,
+    required this.height,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(_SelectionHeaderDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }

@@ -3,7 +3,7 @@ import 'package:de_helper/models/category.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'category_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class CategoryNotifier extends _$CategoryNotifier {
   CategoryRepositoryImpl get _repository => ref.read(categoryRepoProvider);
   @override

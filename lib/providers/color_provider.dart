@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'color_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class ColorNotifier extends _$ColorNotifier {
   ColorPresetRepositoryImpl get _repo => ref.read(colorRepoProvider);
 
