@@ -1,5 +1,6 @@
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/product_provider.dart';
+import 'package:de_helper/providers/subcategory_provider.dart';
 import 'package:de_helper/test_data/test_subcategories.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/category.dart';
@@ -55,6 +56,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     });
     final categories = ref.watch(categoryProvider);
     final products = ref.watch(prodcutProvider);
+    final subcategories = ref.watch(subcategoryProvider);
     void sortCategories() {
       final sorted = categories.value!;
       switch (sortType) {
@@ -93,9 +95,9 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       return products.value!.where((p) => p.categoryId == categoryId).length;
     }
 
-    int getTotalProducts() => products.value!.length;
-    int getTotalCategories() => categories.value!.length;
-    int getTotalSubcategories() => testSubCategories.length;
+    int getTotalProducts() => products.value?.length ?? 0;
+    int getTotalCategories() => categories.value?.length ?? 0;
+    int getTotalSubcategories() => subcategories.value?.length ?? 0;
 
     void showAddCategoryBottomSheet() {
       showModalBottomSheet(

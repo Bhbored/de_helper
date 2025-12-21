@@ -1,15 +1,13 @@
+import 'package:de_helper/providers/color_provider.dart';
+import 'package:de_helper/providers/measurement_provider.dart';
 import 'package:de_helper/providers/product_provider.dart';
+import 'package:de_helper/providers/subcategory_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:de_helper/models/product.dart';
 import 'package:de_helper/models/category.dart';
 import 'package:de_helper/models/subcategory.dart';
-import 'package:de_helper/models/color_preset.dart';
-import 'package:de_helper/models/measurement.dart';
-import 'package:de_helper/test_data/test_colors.dart';
-import 'package:de_helper/test_data/test_measurements.dart';
-import 'package:de_helper/test_data/test_subcategories.dart';
 
 class ProductFormBottomSheet extends ConsumerStatefulWidget {
   final Category? category;
@@ -44,78 +42,6 @@ class _ProductFormBottomSheetState
   double _profitMargin = 0.0;
   bool _useProfitMargin = false;
 
-  List<ColorPreset> _getUniqueColors() {
-    return testColors
-        .fold<Map<String, ColorPreset>>(
-          {},
-          (map, color) {
-            if (!map.containsKey(color.id)) {
-              map[color.id] = color;
-            }
-            return map;
-          },
-        )
-        .values
-        .toList();
-  }
-
-  List<MeasurementPreset> _getUniqueMeasurements() {
-    return testMeasurements
-        .fold<Map<String, MeasurementPreset>>(
-          {},
-          (map, measurement) {
-            if (!map.containsKey(measurement.id)) {
-              map[measurement.id] = measurement;
-            }
-            return map;
-          },
-        )
-        .values
-        .toList();
-  }
-
-  String? _getValidColorId(String? colorId) {
-    final uniqueColors = _getUniqueColors();
-    if (colorId == null || uniqueColors.isEmpty) return null;
-    final exists = uniqueColors.any((c) => c.id == colorId);
-    return exists
-        ? colorId
-        : (uniqueColors.isNotEmpty ? uniqueColors.first.id : null);
-  }
-
-  String? _getValidMeasurementId(String? measurementId) {
-    final uniqueMeasurements = _getUniqueMeasurements();
-    if (measurementId == null || uniqueMeasurements.isEmpty) return null;
-    final exists = uniqueMeasurements.any((m) => m.id == measurementId);
-    return exists
-        ? measurementId
-        : (uniqueMeasurements.isNotEmpty ? uniqueMeasurements.first.id : null);
-  }
-
-  List<SubCategory> _getUniqueSubCategories() {
-    final available = _getAvailableSubCategories();
-    return available
-        .fold<Map<String, SubCategory>>(
-          {},
-          (map, subCategory) {
-            if (!map.containsKey(subCategory.id)) {
-              map[subCategory.id] = subCategory;
-            }
-            return map;
-          },
-        )
-        .values
-        .toList();
-  }
-
-  String? _getValidSubCategoryId(String? subCategoryId) {
-    if (subCategoryId == null) return null;
-    final uniqueSubCategories = _getUniqueSubCategories();
-    if (uniqueSubCategories.isEmpty) return null;
-    final exists = uniqueSubCategories.any((s) => s.id == subCategoryId);
-    return exists ? subCategoryId : null;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -125,23 +51,14 @@ class _ProductFormBottomSheetState
       _barcodeController.text = widget.product!.barcode;
       _secondaryBarcodeController.text = widget.product!.secondaryBarcode ?? '';
       _quantityController.text = widget.product!.quantity.toString();
-      _selectedColorId = _getValidColorId(widget.product!.colorPresetId);
-      _selectedMeasurementId = _getValidMeasurementId(
-        widget.product!.measurementPresetId,
-      );
-      _selectedSubCategoryId = _getValidSubCategoryId(
-        widget.product!.subCategoryId,
-      );
       _profitMargin = widget.product!.profitMargin * 100.0;
       _useProfitMargin = widget.product!.manualCost == null;
       if (widget.product!.manualCost != null) {
         _manualCostController.text = widget.product!.manualCost!.toString();
       }
-    } else {
-      _selectedColorId = testColors.isNotEmpty ? testColors.first.id : null;
-      _selectedMeasurementId = testMeasurements.isNotEmpty
-          ? testMeasurements.first.id
-          : null;
+      _selectedColorId = widget.product!.colorPresetId;
+      _selectedMeasurementId = widget.product!.measurementPresetId;
+      _selectedSubCategoryId = widget.product!.subCategoryId;
     }
   }
 
@@ -161,11 +78,6 @@ class _ProductFormBottomSheetState
       return widget.subCategory!.categoryId;
     }
     return widget.category!.id;
-  }
-
-  List<SubCategory> _getAvailableSubCategories() {
-    final categoryId = _getCategoryId();
-    return testSubCategories.where((s) => s.categoryId == categoryId).toList();
   }
 
   void _resetProfitMargin() {
@@ -208,6 +120,16 @@ class _ProductFormBottomSheetState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final horizontalPadding = screenWidth * 0.05;
     final verticalPadding = screenHeight * 0.02;
+    final subcategories = ref.watch(subcategoryProvider);
+    final colors = ref.watch(colorProvider);
+    final measurements = ref.watch(measurementProvider);
+
+    // Get available subcategories for the selected category
+    final availableSubcategories =
+        subcategories.value
+            ?.where((x) => x.categoryId == _getCategoryId())
+            .toList() ??
+        [];
 
     return SafeArea(
       child: Container(
@@ -478,7 +400,13 @@ class _ProductFormBottomSheetState
                       ),
                       SizedBox(height: screenHeight * 0.02),
                       DropdownButtonFormField<String>(
-                        initialValue: _getValidColorId(_selectedColorId),
+                        initialValue:
+                            colors.value?.any(
+                                  (color) => color.id == _selectedColorId,
+                                ) ==
+                                true
+                            ? _selectedColorId
+                            : null,
                         decoration: InputDecoration(
                           labelText: 'Color',
                           border: OutlineInputBorder(
@@ -487,12 +415,14 @@ class _ProductFormBottomSheetState
                             ),
                           ),
                         ),
-                        items: _getUniqueColors().map((color) {
-                          return DropdownMenuItem<String>(
-                            value: color.id,
-                            child: Text(color.displayLabel),
-                          );
-                        }).toList(),
+                        items:
+                            colors.value?.map((color) {
+                              return DropdownMenuItem<String>(
+                                value: color.id,
+                                child: Text(color.displayLabel),
+                              );
+                            }).toList() ??
+                            [],
                         onChanged: (value) {
                           setState(() {
                             _selectedColorId = value;
@@ -507,9 +437,14 @@ class _ProductFormBottomSheetState
                       ),
                       SizedBox(height: screenHeight * 0.02),
                       DropdownButtonFormField<String>(
-                        initialValue: _getValidMeasurementId(
-                          _selectedMeasurementId,
-                        ),
+                        initialValue:
+                            measurements.value?.any(
+                                  (measurement) =>
+                                      measurement.id == _selectedMeasurementId,
+                                ) ==
+                                true
+                            ? _selectedMeasurementId
+                            : null,
                         decoration: InputDecoration(
                           labelText: 'Measurement Unit',
                           border: OutlineInputBorder(
@@ -518,12 +453,14 @@ class _ProductFormBottomSheetState
                             ),
                           ),
                         ),
-                        items: _getUniqueMeasurements().map((measurement) {
-                          return DropdownMenuItem<String>(
-                            value: measurement.id,
-                            child: Text(measurement.name),
-                          );
-                        }).toList(),
+                        items:
+                            measurements.value?.map((measurement) {
+                              return DropdownMenuItem<String>(
+                                value: measurement.id,
+                                child: Text(measurement.name),
+                              );
+                            }).toList() ??
+                            [],
                         onChanged: (value) {
                           setState(() {
                             _selectedMeasurementId = value;
@@ -537,11 +474,17 @@ class _ProductFormBottomSheetState
                         },
                       ),
                       SizedBox(height: screenHeight * 0.02),
-                      if (_getUniqueSubCategories().isNotEmpty)
+                      if (availableSubcategories.isNotEmpty)
                         DropdownButtonFormField<String>(
-                          initialValue: _getValidSubCategoryId(
-                            _selectedSubCategoryId,
-                          ),
+                          value:
+                              _selectedSubCategoryId == null ||
+                                  availableSubcategories.any(
+                                    (subCategory) =>
+                                        subCategory.id ==
+                                        _selectedSubCategoryId,
+                                  )
+                              ? _selectedSubCategoryId
+                              : null,
                           decoration: InputDecoration(
                             labelText: 'Subcategory (Optional)',
                             border: OutlineInputBorder(
@@ -555,7 +498,7 @@ class _ProductFormBottomSheetState
                               value: null,
                               child: Text('None'),
                             ),
-                            ..._getUniqueSubCategories().map((subCategory) {
+                            ...availableSubcategories.map((subCategory) {
                               return DropdownMenuItem<String>(
                                 value: subCategory.id,
                                 child: Text(subCategory.name),
