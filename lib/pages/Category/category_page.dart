@@ -44,9 +44,11 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
             action: SnackBarAction(
               label: 'Undo',
               onPressed: () {
-                ref
-                    .read(categoryProvider.notifier)
-                    .addInPlace(categoryToShow, deleteIndex!);
+                if (mounted) {
+                  ref
+                      .read(categoryProvider.notifier)
+                      .addInPlace(categoryToShow, deleteIndex!);
+                }
                 copied = null;
               },
             ),
@@ -150,7 +152,6 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       final productCount = getProductCount(category.id);
 
       if (productCount > 0) {
-        // Show error dialog if category has products
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final screenWidth = MediaQuery.of(context).size.width;
         showDialog(
@@ -189,7 +190,6 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
         return;
       }
 
-      // Proceed with deletion if no products
       final id = category.id;
       showDialog(
         context: context,
@@ -242,8 +242,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       );
     }
 
-    void _handleDeleteSelected(List<Category> selectedCategories) {
-      // Filter out categories that have products
+    void handleDeleteSelected(List<Category> selectedCategories) {
       final categoriesWithProducts = selectedCategories
           .where((cat) => getProductCount(cat.id) > 0)
           .toList();
@@ -252,7 +251,6 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
           .toList();
 
       if (categoriesWithProducts.isNotEmpty) {
-        // Show error dialog if any selected categories have products
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final screenWidth = MediaQuery.of(context).size.width;
         final categoryNames = categoriesWithProducts
@@ -298,21 +296,17 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
           },
         );
 
-        // If some categories can be deleted, proceed with those
         if (categoriesToDelete.isNotEmpty) {
-          // Remove categories that can't be deleted from selection
           setState(() {
             for (final cat in categoriesWithProducts) {
               _selectedCategoryIds.remove(cat.id);
             }
           });
 
-          // Delete the categories that can be deleted
           for (final category in categoriesToDelete) {
             ref.read(categoryProvider.notifier).deleteCategory(category.id);
           }
 
-          // Exit selection mode if all selected categories were processed
           if (_selectedCategoryIds.isEmpty) {
             setState(() {
               _isSelectionMode = false;
@@ -322,10 +316,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
         return;
       }
 
-      // All selected categories can be deleted
-      for (final category in selectedCategories) {
-        ref.read(categoryProvider.notifier).deleteCategory(category.id);
-      }
+      ref.read(categoryProvider.notifier).deleteSelection(selectedCategories);
 
       setState(() {
         _selectedCategoryIds.clear();
@@ -333,7 +324,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       });
     }
 
-    void _toggleSelection(String categoryId) {
+    void toggleSelection(String categoryId) {
       setState(() {
         if (_selectedCategoryIds.contains(categoryId)) {
           _selectedCategoryIds.remove(categoryId);
@@ -349,7 +340,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       });
     }
 
-    void _exitSelectionMode() {
+    void exitSelectionMode() {
       setState(() {
         _isSelectionMode = false;
         _selectedCategoryIds.clear();
@@ -378,6 +369,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
         onRefresh: () async {
           ref.invalidate(categoryProvider);
           ref.read(categoryProvider.future);
+          exitSelectionMode();
         },
         child: categories.when(
           data: (x) {
@@ -553,7 +545,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   TextButton(
-                                    onPressed: _exitSelectionMode,
+                                    onPressed: exitSelectionMode,
                                     child: Text(
                                       'Cancel',
                                       style: TextStyle(
@@ -582,7 +574,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                                                 .contains(cat.id),
                                           )
                                           .toList();
-                                      _handleDeleteSelected(selectedCategories);
+                                      handleDeleteSelected(selectedCategories);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.red,
@@ -646,7 +638,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                                 },
                                 onTap: _isSelectionMode
                                     ? () {
-                                        _toggleSelection(category.id);
+                                        toggleSelection(category.id);
                                       }
                                     : null,
                                 behavior: _isSelectionMode

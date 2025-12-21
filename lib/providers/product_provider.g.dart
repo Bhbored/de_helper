@@ -20,7 +20,7 @@ final class ProdcutNotifierProvider
         argument: null,
         retry: null,
         name: r'prodcutProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -33,7 +33,7 @@ final class ProdcutNotifierProvider
   ProdcutNotifier create() => ProdcutNotifier();
 }
 
-String _$prodcutNotifierHash() => r'4513d978ff7363caebe8ab91a4d2158dd9a18180';
+String _$prodcutNotifierHash() => r'7b3fc7f77096cca5d2b40dd5dbff0fd06b50c3cc';
 
 abstract class _$ProdcutNotifier extends $AsyncNotifier<List<Product>> {
   FutureOr<List<Product>> build();

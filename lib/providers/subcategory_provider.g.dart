@@ -20,7 +20,7 @@ final class SubcategoryNotifierProvider
         argument: null,
         retry: null,
         name: r'subcategoryProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -34,7 +34,7 @@ final class SubcategoryNotifierProvider
 }
 
 String _$subcategoryNotifierHash() =>
-    r'f9b66a0e27f3c739eaec7e40e4b2252b605fff47';
+    r'a3612f1fcf57a7634f74532504dda464c7510001';
 
 abstract class _$SubcategoryNotifier extends $AsyncNotifier<List<SubCategory>> {
   FutureOr<List<SubCategory>> build();

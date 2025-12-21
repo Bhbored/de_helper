@@ -1,6 +1,10 @@
 import 'package:de_helper/providers/helpers_providers.dart';
 import 'package:de_helper/providers/product_provider.dart';
 import 'package:de_helper/providers/category_provider.dart';
+import 'package:de_helper/providers/subcategory_provider.dart';
+import 'package:de_helper/providers/color_provider.dart';
+import 'package:de_helper/providers/measurement_provider.dart';
+import 'package:de_helper/utility/excel_export.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/product.dart';
 import 'package:de_helper/models/category.dart';
@@ -201,11 +205,117 @@ class _ProductPageState extends ConsumerState<ProductPage> {
       }
     }
 
+    // Export function - only available when accessed from category page (not subcategory)
+    Future<void> exportToExcel() async {
+      final displayedProducts = widget.subCategory != null
+          ? ref.read(productsBySubProvider(widget.subCategory!.id))
+          : ref.read(productsByCatProvider(widget.category!.id));
+
+      await displayedProducts.when(
+        data: (products) async {
+          if (products.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No products to export'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+            return;
+          }
+
+          // Show loading indicator
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+
+          try {
+            // Get all related data
+            final categories = await ref.read(categoryProvider.future);
+            final subCategories = await ref.read(subcategoryProvider.future);
+            final colors = await ref.read(colorProvider.future);
+            final measurements = await ref.read(measurementProvider.future);
+
+            // Export to Excel
+            final filePath = await ExcelExport.exportProducts(
+              products: products,
+              category: widget.category!,
+              allCategories: categories,
+              allSubCategories: subCategories,
+              allColors: colors,
+              allMeasurements: measurements,
+            );
+
+            // Close loading dialog
+            if (mounted) Navigator.of(context).pop();
+
+            if (filePath != null) {
+              // Share the file
+              await ExcelExport.shareFile(filePath);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Products exported successfully'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to export products'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          } catch (e) {
+            // Close loading dialog
+            if (mounted) Navigator.of(context).pop();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${e.toString()}'),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          }
+        },
+        error: (error, stack) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading products: $error'),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        },
+        loading: () {},
+      );
+    }
+
+    // Build actions list - only show export when accessed from category page
+    final List<Widget>? appBarActions =
+        (widget.category != null && widget.subCategory == null)
+        ? [
+            IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: exportToExcel,
+              tooltip: 'Export to Excel',
+            ),
+          ]
+        : null;
+
     return PageScaffold(
       title: title,
       titleIcon: categoryIcon,
       onAction: showAddProductBottomSheet,
       showDrawer: false,
+      actions: appBarActions,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(prodcutProvider);

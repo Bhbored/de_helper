@@ -1,3 +1,4 @@
+import 'package:de_helper/models/product.dart';
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/helpers_providers.dart';
 import 'package:de_helper/providers/product_provider.dart';
@@ -35,10 +36,29 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(subcategoryProvider, (previous, next) {
+      if (copied != null && next.value!.length < previous!.value!.length) {
+        final categoryToShow = copied!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('SubCategory "${categoryToShow.name}" deleted'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                if (mounted) {
+                  ref.read(subcategoryProvider.notifier).addCategory(copied!);
+                }
+                copied = null;
+              },
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
     final displayedSubcategories = ref.watch(subcategoryProvider);
     final categories = ref.watch(categoryProvider);
     final products = ref.watch(prodcutProvider);
-
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
     final screenHeight = mediaQuery.size.height;
@@ -139,6 +159,17 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
       });
     }
 
+    Future<void> handleDelete(SubCategory selectedSubcategory) async {
+      final subProducts = await ref.read(
+        productsBySubProvider(selectedSubcategory.id).future,
+      );
+
+      for (final product in subProducts) {
+        final updatedProduct = product.copyWith(subCategoryId: null);
+        await ref.read(prodcutProvider.notifier).updateProduct(updatedProduct);
+      }
+    }
+
     void deleteSubcategory(SubCategory subcategory) {
       final id = subcategory.id;
       showDialog(
@@ -173,10 +204,15 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                 ),
               ),
               TextButton(
-                onPressed: () {
+                onPressed: () async {
                   copied = subcategory;
-                  ref.read(subcategoryProvider.notifier).deleteCategory(id);
-                  Navigator.of(context).pop();
+                  handleDelete(subcategory); // Await the async function
+                  await ref
+                      .read(subcategoryProvider.notifier)
+                      .deleteCategory(id); // Also await this
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
                 },
                 child: const Text(
                   'Delete',
@@ -189,17 +225,32 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
       );
     }
 
-    void _handleDeleteSelected(List<SubCategory> selectedSubcategories) {
-      // This method will be called with the selected subcategories
-      // User will implement the actual deletion logic
-      // For now, just clear selection
+    void handleDeleteSelected(List<SubCategory> selectedSubcategories) async {
+      final productsToUpdate = <Product>[];
+      for (final subcategory in selectedSubcategories) {
+        final subProducts = await ref.read(
+          productsBySubProvider(subcategory.id).future,
+        );
+        productsToUpdate.addAll(
+          subProducts.map((p) => p.copyWith(subCategoryId: null)),
+        );
+      }
+
+      for (final product in productsToUpdate) {
+        await ref.read(prodcutProvider.notifier).updateProduct(product);
+      }
+
+      await ref
+          .read(subcategoryProvider.notifier)
+          .deleteSelection(selectedSubcategories);
+
       setState(() {
         _selectedSubcategoryIds.clear();
         _isSelectionMode = false;
       });
     }
 
-    void _toggleSelection(String subcategoryId) {
+    void toggleSelection(String subcategoryId) {
       setState(() {
         if (_selectedSubcategoryIds.contains(subcategoryId)) {
           _selectedSubcategoryIds.remove(subcategoryId);
@@ -215,7 +266,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
       });
     }
 
-    void _exitSelectionMode() {
+    void exitSelectionMode() {
       setState(() {
         _isSelectionMode = false;
         _selectedSubcategoryIds.clear();
@@ -240,6 +291,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
             onRefresh: () async {
               ref.invalidate(subcategoryProvider);
               ref.read(subcategoryProvider.future);
+              exitSelectionMode();
             },
             child: CustomScrollView(
               slivers: [
@@ -415,7 +467,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   TextButton(
-                                    onPressed: _exitSelectionMode,
+                                    onPressed: exitSelectionMode,
                                     child: Text(
                                       'Cancel',
                                       style: TextStyle(
@@ -448,7 +500,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                                                         ),
                                               )
                                               .toList();
-                                      _handleDeleteSelected(
+                                      handleDeleteSelected(
                                         selectedSubcategories,
                                       );
                                     },
@@ -517,7 +569,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                                 },
                                 onTap: _isSelectionMode
                                     ? () {
-                                        _toggleSelection(subcategory.id);
+                                        toggleSelection(subcategory.id);
                                       }
                                     : null,
                                 behavior: _isSelectionMode

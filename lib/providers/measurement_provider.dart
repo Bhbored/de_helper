@@ -80,4 +80,15 @@ class MeasurementNotifier extends _$MeasurementNotifier {
   void sortMeasurement(List<MeasurementPreset> newList) {
     state = AsyncValue.data(newList);
   }
+
+  Future<void> deleteSelection(List<MeasurementPreset> measurments) async {
+    List<String> ids = [];
+    for (var x in measurments) {
+      ids.add(x.id);
+    }
+    for (var y in ids) {
+      _repo.delete(y);
+    }
+    refreshMeasurement();
+  }
 }

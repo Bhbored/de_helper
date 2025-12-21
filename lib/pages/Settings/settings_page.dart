@@ -74,7 +74,7 @@ class SettingsPage extends ConsumerWidget {
         padding: EdgeInsets.all(screenWidth * 0.05),
         children: [
           SizedBox(height: screenHeight * 0.02),
-          // Theme Switch Section
+
           Container(
             decoration: BoxDecoration(
               color: isDark ? Colors.grey[800] : Colors.grey[100],
@@ -116,7 +116,7 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           SizedBox(height: screenHeight * 0.03),
-          // Clear Data Section
+
           Container(
             decoration: BoxDecoration(
               color: isDark ? Colors.grey[800] : Colors.grey[100],

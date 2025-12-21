@@ -10,6 +10,7 @@ class PageScaffold extends ConsumerWidget {
   final Color? actionColor;
   final bool showDrawer;
   final IconData? titleIcon;
+  final List<Widget>? actions;
 
   const PageScaffold({
     super.key,
@@ -20,6 +21,7 @@ class PageScaffold extends ConsumerWidget {
     this.actionColor,
     this.showDrawer = true,
     this.titleIcon,
+    this.actions,
   });
 
   @override
@@ -28,10 +30,9 @@ class PageScaffold extends ConsumerWidget {
     final screenWidth = mediaQuery.size.width;
     final isDark = ref.watch(themeStateProvider);
 
-    // Try to find parent Scaffold with drawer BEFORE creating our own Scaffold
     final parentScaffold = Scaffold.maybeOf(context);
     final hasParentDrawer = parentScaffold?.hasDrawer ?? false;
-    // Store the parent scaffold state to use later
+
     final parentScaffoldState = hasParentDrawer ? parentScaffold : null;
 
     return Scaffold(
@@ -45,7 +46,6 @@ class PageScaffold extends ConsumerWidget {
                   color: isDark ? Colors.white : Colors.black,
                 ),
                 onPressed: () {
-                  // Use the stored parent scaffold state to open the drawer
                   parentScaffoldState.openDrawer();
                 },
               )
@@ -65,6 +65,7 @@ class PageScaffold extends ConsumerWidget {
             SizedBox(width: screenWidth * 0.10),
           ],
         ),
+        actions: actions,
       ),
       floatingActionButton: onAction != null
           ? FloatingActionButton(

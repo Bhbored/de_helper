@@ -97,4 +97,15 @@ class CategoryNotifier extends _$CategoryNotifier {
         .toList();
     state = AsyncValue.data(newList);
   }
+
+  Future<void> deleteSelection(List<Category> categories) async {
+    List<String> ids = [];
+    for (var x in categories) {
+      ids.add(x.id);
+    }
+    for (var y in ids) {
+      _repository.delete(y);
+    }
+    refreshCategories();
+  }
 }

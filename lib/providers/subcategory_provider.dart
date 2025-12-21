@@ -100,4 +100,15 @@ class SubcategoryNotifier extends _$SubcategoryNotifier {
         .toList();
     state = AsyncValue.data(newList);
   }
+
+  Future<void> deleteSelection(List<SubCategory> subcategories) async {
+    List<String> ids = [];
+    for (var x in subcategories) {
+      ids.add(x.id);
+    }
+    for (var y in ids) {
+      _repository.delete(y);
+    }
+    refreshCategories();
+  }
 }

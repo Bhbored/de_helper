@@ -21,7 +21,7 @@ final class MeasurementNotifierProvider
         argument: null,
         retry: null,
         name: r'measurementProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -35,7 +35,7 @@ final class MeasurementNotifierProvider
 }
 
 String _$measurementNotifierHash() =>
-    r'6895234ad5fc259e92c649dc2e190185a310e5dc';
+    r'0a1ecafbe865d76d254115c31d5625bec5233ee6';
 
 abstract class _$MeasurementNotifier
     extends $AsyncNotifier<List<MeasurementPreset>> {

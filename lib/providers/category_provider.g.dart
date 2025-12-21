@@ -20,7 +20,7 @@ final class CategoryNotifierProvider
         argument: null,
         retry: null,
         name: r'categoryProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -33,7 +33,7 @@ final class CategoryNotifierProvider
   CategoryNotifier create() => CategoryNotifier();
 }
 
-String _$categoryNotifierHash() => r'76013313ff2676a67fa303fccc5e3fe9893fae36';
+String _$categoryNotifierHash() => r'76383df0a8ddfe4a76f43e67ac5c0979f0bca6e1';
 
 abstract class _$CategoryNotifier extends $AsyncNotifier<List<Category>> {
   FutureOr<List<Category>> build();

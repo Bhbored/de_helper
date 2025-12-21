@@ -83,4 +83,15 @@ class ColorNotifier extends _$ColorNotifier {
   void sortCategories(List<ColorPreset> newList) {
     state = AsyncValue.data(newList);
   }
+
+  Future<void> deleteSelection(List<ColorPreset> colors) async {
+    List<String> ids = [];
+    for (var x in colors) {
+      ids.add(x.id);
+    }
+    for (var y in ids) {
+      _repo.delete(y);
+    }
+    refreshProduct();
+  }
 }
