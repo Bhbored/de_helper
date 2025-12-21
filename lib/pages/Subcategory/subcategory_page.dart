@@ -128,7 +128,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
         if (result != null &&
             result['name'] != null &&
             result['categoryId'] != null) {
-          var newsub = SubCategory.create(
+          var newsub = subcategory.copyWith(
             name: result['name'] as String,
             categoryId: result['categoryId'] as String,
           );

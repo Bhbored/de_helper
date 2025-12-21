@@ -73,8 +73,8 @@ class ColorNotifier extends _$ColorNotifier {
     final newList = current
         .where(
           (cat) =>
-              cat.name!.toLowerCase().contains(query.toLowerCase()) ||
-              cat.hexCode!.toLowerCase().contains(query.toLowerCase()),
+              (cat.name?.toLowerCase() ?? '').contains(query.toLowerCase()) ||
+              (cat.hexCode?.toLowerCase() ?? '').contains(query.toLowerCase()),
         )
         .toList();
     state = AsyncValue.data(newList);

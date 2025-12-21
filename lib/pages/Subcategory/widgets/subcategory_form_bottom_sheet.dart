@@ -1,7 +1,6 @@
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/subcategory.dart';
-import 'package:de_helper/test_data/test_categories.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SubcategoryFormBottomSheet extends ConsumerStatefulWidget {
@@ -26,6 +25,7 @@ class _SubcategoryFormBottomSheetState
     super.initState();
     if (widget.subcategory != null) {
       _nameController.text = widget.subcategory!.name;
+      _selectedCategoryId = widget.subcategory!.categoryId;
     }
   }
 
@@ -44,7 +44,7 @@ class _SubcategoryFormBottomSheetState
     _isDark = Theme.of(context).brightness == Brightness.dark;
     final categories = ref.watch(categoryProvider);
 
-    String? _getValidCategoryId() {
+    String? getValidCategoryId() {
       String? candidateId;
 
       if (_selectedCategoryId != null) {
@@ -76,7 +76,7 @@ class _SubcategoryFormBottomSheetState
       return null;
     }
 
-    void _save() {
+    void save() {
       if (_formKey.currentState!.validate()) {
         Navigator.of(context).pop({
           'name': _nameController.text.trim(),
@@ -85,7 +85,7 @@ class _SubcategoryFormBottomSheetState
       }
     }
 
-    void _cancel() {
+    void cancel() {
       Navigator.of(context).pop();
     }
 
@@ -157,7 +157,7 @@ class _SubcategoryFormBottomSheetState
               ),
               SizedBox(height: screenHeight * 0.02),
               DropdownButtonFormField<String>(
-                initialValue: _getValidCategoryId(),
+                initialValue: getValidCategoryId(),
                 decoration: InputDecoration(
                   labelText: 'Category',
                   hintText: 'Select a category',
@@ -209,7 +209,7 @@ class _SubcategoryFormBottomSheetState
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _cancel,
+                      onPressed: cancel,
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(
                           vertical: screenHeight * 0.02,
@@ -237,7 +237,7 @@ class _SubcategoryFormBottomSheetState
                   SizedBox(width: screenWidth * 0.03),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _save,
+                      onPressed: save,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(
                           vertical: screenHeight * 0.02,

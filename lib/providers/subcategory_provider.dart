@@ -10,6 +10,7 @@ class SubcategoryNotifier extends _$SubcategoryNotifier {
 
   @override
   FutureOr<List<SubCategory>> build() async {
+    print('fetched all subcategory ');
     return _repository.getAll();
   }
 
@@ -57,7 +58,7 @@ class SubcategoryNotifier extends _$SubcategoryNotifier {
     final id = cat.id;
     final current = state.value ?? [];
     final noteIndex = current.indexWhere((x) => x.id == id);
-    if (noteIndex == -1) throw StateError('Category with id $id not found');
+    if (noteIndex == -1) throw StateError('Subcategory with id $id not found');
 
     final oldTask = current[noteIndex];
     final updatedNotes = [...current];
