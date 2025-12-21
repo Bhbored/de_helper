@@ -121,12 +121,14 @@ class _CategoryCardState extends State<CategoryCard> {
               ),
             ),
             title: Text(
-              widget.category.name,
+              widget.category.name.toUpperCase(),
               style: TextStyle(
                 fontSize: widget.screenWidth * 0.04,
                 fontWeight: FontWeight.w600,
                 color: widget.isDark ? Colors.white : Colors.grey[900],
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
               '${widget.productCount} Products',

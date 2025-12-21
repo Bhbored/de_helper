@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/subcategory.dart';
-import 'package:de_helper/test_data/test_categories.dart';
+import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/pages/Product/product_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SubcategoryCard extends StatefulWidget {
+class SubcategoryCard extends ConsumerStatefulWidget {
   final SubCategory subcategory;
   final int productCount;
   final bool isDark;
@@ -24,16 +25,32 @@ class SubcategoryCard extends StatefulWidget {
   });
 
   @override
-  State<SubcategoryCard> createState() => _SubcategoryCardState();
+  ConsumerState<SubcategoryCard> createState() => _SubcategoryCardState();
 }
 
-class _SubcategoryCardState extends State<SubcategoryCard> {
+class _SubcategoryCardState extends ConsumerState<SubcategoryCard> {
   IconData get _categoryIcon {
-    final category = testCategories.firstWhere(
+    final categories = ref.watch(categoryProvider);
+    if (categories.value == null || categories.value!.isEmpty) {
+      return Icons.category; // Default icon if categories are not loaded
+    }
+    final category = categories.value!.firstWhere(
       (c) => c.id == widget.subcategory.categoryId,
-      orElse: () => testCategories.first,
+      orElse: () => categories.value!.first,
     );
     return category.icon;
+  }
+
+  String? get _categoryName {
+    final categories = ref.watch(categoryProvider);
+    if (categories.value == null || categories.value!.isEmpty) {
+      return null;
+    }
+    final category = categories.value!.firstWhere(
+      (c) => c.id == widget.subcategory.categoryId,
+      orElse: () => categories.value!.first,
+    );
+    return category.name;
   }
 
   @override
@@ -145,6 +162,25 @@ class _SubcategoryCardState extends State<SubcategoryCard> {
                 color: widget.isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
+            trailing: _categoryName != null
+                ? ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: widget.screenWidth * 0.3,
+                    ),
+                    child: Text(
+                      _categoryName!.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: widget.screenWidth * 0.038,
+                        fontWeight: FontWeight.bold,
+                        color: widget.isDark
+                            ? Colors.green[300]
+                            : Colors.blue[700],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )
+                : null,
           ),
         ),
       ),

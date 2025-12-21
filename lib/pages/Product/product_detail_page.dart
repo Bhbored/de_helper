@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/product.dart';
-import 'package:de_helper/test_data/test_categories.dart';
-import 'package:de_helper/test_data/test_subcategories.dart';
-import 'package:de_helper/test_data/test_colors.dart';
-import 'package:de_helper/test_data/test_measurements.dart';
+import 'package:de_helper/providers/category_provider.dart';
+import 'package:de_helper/providers/subcategory_provider.dart';
+import 'package:de_helper/providers/color_provider.dart';
+import 'package:de_helper/providers/measurement_provider.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
 import 'package:de_helper/pages/Product/widgets/product_detail_section.dart';
 import 'package:de_helper/pages/Product/widgets/product_detail_item.dart';
 import 'package:de_helper/pages/Product/widgets/product_detail_item_with_color.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProductDetailPage extends StatelessWidget {
+class ProductDetailPage extends ConsumerWidget {
   final Product product;
 
   const ProductDetailPage({
@@ -17,9 +18,13 @@ class ProductDetailPage extends StatelessWidget {
     required this.product,
   });
 
-  String _getCategoryName() {
+  String _getCategoryName(WidgetRef ref) {
+    final categories = ref.watch(categoryProvider);
+    if (categories.value == null || categories.value!.isEmpty) {
+      return 'Unknown';
+    }
     try {
-      final category = testCategories.firstWhere(
+      final category = categories.value!.firstWhere(
         (c) => c.id == product.categoryId,
       );
       return category.name;
@@ -28,21 +33,29 @@ class ProductDetailPage extends StatelessWidget {
     }
   }
 
-  String _getSubCategoryName() {
-    if (product.subCategoryId == null) return 'None';
+  String? _getSubCategoryName(WidgetRef ref) {
+    if (product.subCategoryId == null) return null;
+    final subcategories = ref.watch(subcategoryProvider);
+    if (subcategories.value == null || subcategories.value!.isEmpty) {
+      return null;
+    }
     try {
-      final subCategory = testSubCategories.firstWhere(
+      final subCategory = subcategories.value!.firstWhere(
         (s) => s.id == product.subCategoryId,
       );
       return subCategory.name;
     } catch (e) {
-      return 'Unknown';
+      return null;
     }
   }
 
-  String _getColorName() {
+  String _getColorName(WidgetRef ref) {
+    final colors = ref.watch(colorProvider);
+    if (colors.value == null || colors.value!.isEmpty) {
+      return 'Unknown';
+    }
     try {
-      final color = testColors.firstWhere(
+      final color = colors.value!.firstWhere(
         (c) => c.id == product.colorPresetId,
       );
       return color.displayLabel;
@@ -51,9 +64,13 @@ class ProductDetailPage extends StatelessWidget {
     }
   }
 
-  String _getColorHex() {
+  String _getColorHex(WidgetRef ref) {
+    final colors = ref.watch(colorProvider);
+    if (colors.value == null || colors.value!.isEmpty) {
+      return '#000000';
+    }
     try {
-      final color = testColors.firstWhere(
+      final color = colors.value!.firstWhere(
         (c) => c.id == product.colorPresetId,
       );
       return color.hexCode ?? '#000000';
@@ -70,9 +87,13 @@ class ProductDetailPage extends StatelessWidget {
     return Colors.grey;
   }
 
-  String _getMeasurementName() {
+  String _getMeasurementName(WidgetRef ref) {
+    final measurements = ref.watch(measurementProvider);
+    if (measurements.value == null || measurements.value!.isEmpty) {
+      return 'Unknown';
+    }
     try {
-      final measurement = testMeasurements.firstWhere(
+      final measurement = measurements.value!.firstWhere(
         (m) => m.id == product.measurementPresetId,
       );
       return measurement.name;
@@ -82,13 +103,13 @@ class ProductDetailPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
     final screenHeight = mediaQuery.size.height;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final horizontalPadding = screenWidth * 0.05;
-
+    print(product.toString());
     return PageScaffold(
       title: product.name,
       body: ListView(
@@ -114,7 +135,7 @@ class ProductDetailPage extends StatelessWidget {
                   width: screenWidth * 0.12,
                   height: screenWidth * 0.12,
                   decoration: BoxDecoration(
-                    color: _hexToColor(_getColorHex()),
+                    color: _hexToColor(_getColorHex(ref)),
                     borderRadius: BorderRadius.circular(screenWidth * 0.02),
                   ),
                 ),
@@ -212,10 +233,9 @@ class ProductDetailPage extends StatelessWidget {
                 isDark: isDark,
                 screenWidth: screenWidth,
                 label: 'Category',
-                value: _getCategoryName(),
+                value: _getCategoryName(ref),
               ),
-              if (product.subCategoryId != null &&
-                  _getSubCategoryName() != 'None') ...[
+              if (_getSubCategoryName(ref) != null) ...[
                 Divider(
                   height: 1,
                   thickness: 1,
@@ -225,7 +245,7 @@ class ProductDetailPage extends StatelessWidget {
                   isDark: isDark,
                   screenWidth: screenWidth,
                   label: 'Subcategory',
-                  value: _getSubCategoryName(),
+                  value: _getSubCategoryName(ref)!,
                 ),
               ],
             ],
@@ -241,8 +261,8 @@ class ProductDetailPage extends StatelessWidget {
                 isDark: isDark,
                 screenWidth: screenWidth,
                 label: 'Color',
-                value: _getColorName(),
-                color: _hexToColor(_getColorHex()),
+                value: _getColorName(ref),
+                color: _hexToColor(_getColorHex(ref)),
               ),
               Divider(
                 height: 1,
@@ -253,7 +273,7 @@ class ProductDetailPage extends StatelessWidget {
                 isDark: isDark,
                 screenWidth: screenWidth,
                 label: 'Measurement Unit',
-                value: _getMeasurementName(),
+                value: _getMeasurementName(ref),
               ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'package:de_helper/providers/color_provider.dart';
 import 'package:de_helper/providers/measurement_provider.dart';
 import 'package:de_helper/providers/product_provider.dart';
 import 'package:de_helper/providers/subcategory_provider.dart';
+import 'package:de_helper/providers/category_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -38,6 +39,7 @@ class _ProductFormBottomSheetState
 
   String? _selectedColorId;
   String? _selectedMeasurementId;
+  String? _selectedCategoryId;
   String? _selectedSubCategoryId;
   double _profitMargin = 0.0;
   bool _useProfitMargin = false;
@@ -45,6 +47,15 @@ class _ProductFormBottomSheetState
   @override
   void initState() {
     super.initState();
+    // Initialize category ID
+    if (widget.product != null) {
+      _selectedCategoryId = widget.product!.categoryId;
+    } else if (widget.subCategory != null) {
+      _selectedCategoryId = widget.subCategory!.categoryId;
+    } else if (widget.category != null) {
+      _selectedCategoryId = widget.category!.id;
+    }
+
     if (widget.product != null) {
       _nameController.text = widget.product!.name;
       _priceController.text = widget.product!.price.toString();
@@ -59,6 +70,9 @@ class _ProductFormBottomSheetState
       _selectedColorId = widget.product!.colorPresetId;
       _selectedMeasurementId = widget.product!.measurementPresetId;
       _selectedSubCategoryId = widget.product!.subCategoryId;
+    } else {
+      // For new products, subcategory defaults to null
+      _selectedSubCategoryId = null;
     }
   }
 
@@ -74,10 +88,18 @@ class _ProductFormBottomSheetState
   }
 
   String _getCategoryId() {
+    // Use selected category if available, otherwise fall back to widget values
+    if (_selectedCategoryId != null) {
+      return _selectedCategoryId!;
+    }
     if (widget.subCategory != null) {
       return widget.subCategory!.categoryId;
     }
-    return widget.category!.id;
+    if (widget.category != null) {
+      return widget.category!.id;
+    }
+    // This should not happen, but provide a fallback
+    return '';
   }
 
   void _resetProfitMargin() {
@@ -120,6 +142,7 @@ class _ProductFormBottomSheetState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final horizontalPadding = screenWidth * 0.05;
     final verticalPadding = screenHeight * 0.02;
+    final categories = ref.watch(categoryProvider);
     final subcategories = ref.watch(subcategoryProvider);
     final colors = ref.watch(colorProvider);
     final measurements = ref.watch(measurementProvider);
@@ -130,6 +153,9 @@ class _ProductFormBottomSheetState
             ?.where((x) => x.categoryId == _getCategoryId())
             .toList() ??
         [];
+
+    // Determine if we should show category dropdown (when coming from category page, not subcategory)
+    final showCategoryDropdown = widget.subCategory == null;
 
     return SafeArea(
       child: Container(
@@ -399,6 +425,48 @@ class _ProductFormBottomSheetState
                         },
                       ),
                       SizedBox(height: screenHeight * 0.02),
+                      if (showCategoryDropdown)
+                        DropdownButtonFormField<String>(
+                          value:
+                              categories.value?.any(
+                                    (category) =>
+                                        category.id == _selectedCategoryId,
+                                  ) ==
+                                  true
+                              ? _selectedCategoryId
+                              : null,
+                          decoration: InputDecoration(
+                            labelText: 'Category',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                screenWidth * 0.02,
+                              ),
+                            ),
+                          ),
+                          items:
+                              categories.value?.map((category) {
+                                return DropdownMenuItem<String>(
+                                  value: category.id,
+                                  child: Text(category.name),
+                                );
+                              }).toList() ??
+                              [],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedCategoryId = value;
+                              // Reset subcategory when category changes
+                              _selectedSubCategoryId = null;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Please select a category';
+                            }
+                            return null;
+                          },
+                        ),
+                      if (showCategoryDropdown)
+                        SizedBox(height: screenHeight * 0.02),
                       DropdownButtonFormField<String>(
                         initialValue:
                             colors.value?.any(
@@ -538,11 +606,35 @@ class _ProductFormBottomSheetState
                     ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
+                          // Validate subcategory belongs to selected category
+                          String? validatedSubCategoryId =
+                              _selectedSubCategoryId;
+                          if (_selectedSubCategoryId != null) {
+                            final subcategories = ref.read(subcategoryProvider);
+                            if (subcategories.value != null) {
+                              final categoryId = _getCategoryId();
+                              final subcategoryBelongsToCategory = subcategories
+                                  .value!
+                                  .any(
+                                    (sub) =>
+                                        sub.id == _selectedSubCategoryId &&
+                                        sub.categoryId == categoryId,
+                                  );
+                              // If subcategory doesn't belong to the category, set it to null
+                              if (!subcategoryBelongsToCategory) {
+                                validatedSubCategoryId = null;
+                              }
+                            } else {
+                              // If subcategories are not loaded, set to null to be safe
+                              validatedSubCategoryId = null;
+                            }
+                          }
+
                           final product = Product.create(
                             id: widget.product?.id,
                             name: _nameController.text.trim(),
                             categoryId: _getCategoryId(),
-                            subCategoryId: _selectedSubCategoryId,
+                            subCategoryId: validatedSubCategoryId,
                             quantity: int.parse(_quantityController.text),
                             price: double.parse(_priceController.text),
                             manualCost: _useProfitMargin
