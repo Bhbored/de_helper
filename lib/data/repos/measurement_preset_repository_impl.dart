@@ -1,7 +1,16 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../models/measurement.dart';
 import '../db/app_database.dart' hide MeasurementPreset;
 import '../db/dto/measurement_preset_dto.dart';
 import 'interface/measurement_preset_repository.dart';
+part 'measurement_preset_repository_impl.g.dart';
+
+@Riverpod(keepAlive: true)
+MeasurementPresetRepositoryImpl measurmentRepo(Ref ref) {
+  final db = ref.watch(getDbProvider);
+  return MeasurementPresetRepositoryImpl(db);
+}
 
 class MeasurementPresetRepositoryImpl implements MeasurementPresetRepository {
   final AppDatabase _db;

@@ -3,8 +3,6 @@ import 'package:uuid/uuid.dart';
 part 'measurement.freezed.dart';
 part 'measurement.g.dart';
 
-final uuid = const Uuid().v4();
-
 @freezed
 sealed class MeasurementPreset with _$MeasurementPreset {
   const factory MeasurementPreset({
@@ -17,7 +15,7 @@ sealed class MeasurementPreset with _$MeasurementPreset {
     required String name,
   }) {
     return MeasurementPreset(
-      id: id ?? uuid,
+      id: id ?? Uuid().v4(),
       name: name,
     );
   }
