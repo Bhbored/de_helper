@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'product_provider.dart';
+part of 'color_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,44 +9,45 @@ part of 'product_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(ProdcutNotifier)
-const prodcutProvider = ProdcutNotifierProvider._();
+@ProviderFor(ColorNotifier)
+const colorProvider = ColorNotifierProvider._();
 
-final class ProdcutNotifierProvider
-    extends $AsyncNotifierProvider<ProdcutNotifier, List<Product>> {
-  const ProdcutNotifierProvider._()
+final class ColorNotifierProvider
+    extends $AsyncNotifierProvider<ColorNotifier, List<ColorPreset>> {
+  const ColorNotifierProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'prodcutProvider',
+        name: r'colorProvider',
         isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$prodcutNotifierHash();
+  String debugGetCreateSourceHash() => _$colorNotifierHash();
 
   @$internal
   @override
-  ProdcutNotifier create() => ProdcutNotifier();
+  ColorNotifier create() => ColorNotifier();
 }
 
-String _$prodcutNotifierHash() => r'4513d978ff7363caebe8ab91a4d2158dd9a18180';
+String _$colorNotifierHash() => r'5c180d469f17efd681480750fd30942f853c97dc';
 
-abstract class _$ProdcutNotifier extends $AsyncNotifier<List<Product>> {
-  FutureOr<List<Product>> build();
+abstract class _$ColorNotifier extends $AsyncNotifier<List<ColorPreset>> {
+  FutureOr<List<ColorPreset>> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<AsyncValue<List<Product>>, List<Product>>;
+    final ref =
+        this.ref as $Ref<AsyncValue<List<ColorPreset>>, List<ColorPreset>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<Product>>, List<Product>>,
-              AsyncValue<List<Product>>,
+              AnyNotifier<AsyncValue<List<ColorPreset>>, List<ColorPreset>>,
+              AsyncValue<List<ColorPreset>>,
               Object?,
               Object?
             >;

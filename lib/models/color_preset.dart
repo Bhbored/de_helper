@@ -4,8 +4,6 @@ import 'package:uuid/uuid.dart';
 part 'color_preset.freezed.dart';
 part 'color_preset.g.dart';
 
-final uuid = const Uuid().v4();
-
 @freezed
 sealed class ColorPreset with _$ColorPreset {
   const ColorPreset._();
@@ -22,7 +20,7 @@ sealed class ColorPreset with _$ColorPreset {
     String? hexCode,
   }) {
     return ColorPreset(
-      id: id ?? uuid,
+      id: id ?? Uuid().v4(),
       name: name,
       hexCode: hexCode,
     );

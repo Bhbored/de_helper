@@ -3,8 +3,6 @@ import 'package:uuid/uuid.dart';
 part 'product.freezed.dart';
 part 'product.g.dart';
 
-final uuid = const Uuid().v4();
-
 @freezed
 sealed class Product with _$Product {
   const Product._();
@@ -38,7 +36,7 @@ sealed class Product with _$Product {
     required String measurementPresetId,
   }) {
     return Product(
-      id: id ?? uuid,
+      id: id ?? const Uuid().v4(),
       name: name,
       categoryId: categoryId,
       subCategoryId: subCategoryId,

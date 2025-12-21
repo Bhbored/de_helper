@@ -1,13 +1,15 @@
-import 'package:de_helper/data/repos/product_repository_impl.dart';
-import 'package:de_helper/models/product.dart';
+import 'package:de_helper/data/repos/color_preset_repository_impl.dart';
+import 'package:de_helper/models/color_preset.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-part 'product_provider.g.dart';
+
+part 'color_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-class ProdcutNotifier extends _$ProdcutNotifier {
-  ProductRepositoryImpl get _repo => ref.read(productRepoProvider);
+class ColorNotifier extends _$ColorNotifier {
+  ColorPresetRepositoryImpl get _repo => ref.read(colorRepoProvider);
+
   @override
-  FutureOr<List<Product>> build() async {
+  FutureOr<List<ColorPreset>> build() async {
     return _repo.getAll();
   }
 
@@ -16,15 +18,15 @@ class ProdcutNotifier extends _$ProdcutNotifier {
     state = await AsyncValue.guard(() => _repo.getAll());
   }
 
-  Future<void> addProduct(Product newProduct) async {
+  Future<void> addProduct(ColorPreset color) async {
     final current = state.value ?? [];
-    state = AsyncValue.data([...current, newProduct]);
+    state = AsyncValue.data([...current, color]);
     try {
-      await _repo.create(newProduct);
+      await _repo.create(color);
       refreshProduct();
     } catch (e) {
       state = AsyncValue.data(current);
-      throw StateError('erorr adding Product ${newProduct.name}');
+      throw StateError('erorr adding Product ${color.name}');
     }
   }
 
@@ -44,7 +46,7 @@ class ProdcutNotifier extends _$ProdcutNotifier {
     }
   }
 
-  Future<void> updateProduct(Product cat) async {
+  Future<void> updateProduct(ColorPreset cat) async {
     final id = cat.id;
     final current = state.value ?? [];
     final noteIndex = current.indexWhere((x) => x.id == id);
@@ -70,9 +72,15 @@ class ProdcutNotifier extends _$ProdcutNotifier {
     final current = state.value ?? [];
     final newList = current
         .where(
-          (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
+          (cat) =>
+              cat.name!.toLowerCase().contains(query.toLowerCase()) ||
+              cat.hexCode!.toLowerCase().contains(query.toLowerCase()),
         )
         .toList();
+    state = AsyncValue.data(newList);
+  }
+
+  void sortCategories(List<ColorPreset> newList) {
     state = AsyncValue.data(newList);
   }
 }

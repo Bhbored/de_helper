@@ -1,7 +1,17 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../models/subcategory.dart';
 import '../db/app_database.dart' hide SubCategory;
 import '../db/dto/subcategory_dto.dart';
 import 'interface/subcategory_repository.dart';
+
+part 'subcategory_repository_impl.g.dart';
+
+@Riverpod(keepAlive: true)
+SubCategoryRepositoryImpl subcategoryRepo(Ref ref) {
+  final db = ref.watch(getDbProvider);
+  return SubCategoryRepositoryImpl(db);
+}
 
 class SubCategoryRepositoryImpl implements SubCategoryRepository {
   final AppDatabase _db;

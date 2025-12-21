@@ -1,7 +1,17 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../models/color_preset.dart';
 import '../db/app_database.dart' hide ColorPreset;
 import '../db/dto/color_preset_dto.dart';
 import 'interface/color_preset_repository.dart';
+
+part 'color_preset_repository_impl.g.dart';
+
+@Riverpod(keepAlive: true)
+ColorPresetRepositoryImpl colorRepo(Ref ref) {
+  final db = ref.watch(getDbProvider);
+  return ColorPresetRepositoryImpl(db);
+}
 
 class ColorPresetRepositoryImpl implements ColorPresetRepository {
   final AppDatabase _db;

@@ -1,17 +1,19 @@
-import 'package:de_helper/data/repos/category_repository_impl.dart';
-import 'package:de_helper/models/category.dart';
+import 'package:de_helper/data/repos/subcategory_repository_impl.dart';
+import 'package:de_helper/models/subcategory.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-part 'category_provider.g.dart';
+part 'subcategory_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-class CategoryNotifier extends _$CategoryNotifier {
-  CategoryRepositoryImpl get _repository => ref.read(categoryRepoProvider);
+class SubcategoryNotifier extends _$SubcategoryNotifier {
+  SubCategoryRepositoryImpl get _repository =>
+      ref.read(subcategoryRepoProvider);
+
   @override
-  FutureOr<List<Category>> build() async {
+  FutureOr<List<SubCategory>> build() async {
     return _repository.getAll();
   }
 
-  Future<void> addCategory(Category newCategory) async {
+  Future<void> addCategory(SubCategory newCategory) async {
     final current = state.value ?? [];
     state = AsyncValue.data([...current, newCategory]);
     try {
@@ -23,7 +25,7 @@ class CategoryNotifier extends _$CategoryNotifier {
     }
   }
 
-  Future<void> addInPlace(Category newCategory, int index) async {
+  Future<void> addInPlace(SubCategory newCategory, int index) async {
     final current = state.value ?? [];
     current.insert(index, newCategory);
     state = AsyncValue.data([...current]);
@@ -51,7 +53,7 @@ class CategoryNotifier extends _$CategoryNotifier {
     }
   }
 
-  Future<void> updateCategory(Category cat) async {
+  Future<void> updateCategory(SubCategory cat) async {
     final id = cat.id;
     final current = state.value ?? [];
     final noteIndex = current.indexWhere((x) => x.id == id);
@@ -78,13 +80,13 @@ class CategoryNotifier extends _$CategoryNotifier {
     state = await AsyncValue.guard(() => _repository.getAll());
   }
 
-  int getIndex(Category cat) {
+  int getIndex(SubCategory cat) {
     final current = state.value ?? [];
     final index = current.indexOf(cat);
     return index;
   }
 
-  void sortCategories(List<Category> newList) {
+  void sortCategories(List<SubCategory> newList) {
     state = AsyncValue.data(newList);
   }
 

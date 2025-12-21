@@ -1,19 +1,21 @@
+import 'package:de_helper/providers/category_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/subcategory.dart';
 import 'package:de_helper/test_data/test_categories.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SubcategoryFormBottomSheet extends StatefulWidget {
+class SubcategoryFormBottomSheet extends ConsumerStatefulWidget {
   final SubCategory? subcategory;
 
   const SubcategoryFormBottomSheet({super.key, this.subcategory});
 
   @override
-  State<SubcategoryFormBottomSheet> createState() =>
+  ConsumerState<SubcategoryFormBottomSheet> createState() =>
       _SubcategoryFormBottomSheetState();
 }
 
 class _SubcategoryFormBottomSheetState
-    extends State<SubcategoryFormBottomSheet> {
+    extends ConsumerState<SubcategoryFormBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   String? _selectedCategoryId;
@@ -27,55 +29,10 @@ class _SubcategoryFormBottomSheetState
     }
   }
 
-  String? _getValidCategoryId() {
-    String? candidateId;
-
-    if (_selectedCategoryId != null) {
-      candidateId = _selectedCategoryId;
-    } else if (widget.subcategory != null) {
-      candidateId = widget.subcategory!.categoryId;
-    }
-
-    if (candidateId == null) {
-      return null;
-    }
-
-    final matchingCategories = testCategories
-        .where(
-          (cat) => cat.id == candidateId,
-        )
-        .toList();
-
-    if (matchingCategories.length == 1) {
-      return candidateId;
-    }
-
-    if (_selectedCategoryId == candidateId && matchingCategories.isEmpty) {
-      setState(() {
-        _selectedCategoryId = null;
-      });
-    }
-
-    return null;
-  }
-
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
-  }
-
-  void _save() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pop({
-        'name': _nameController.text.trim(),
-        'categoryId': _selectedCategoryId,
-      });
-    }
-  }
-
-  void _cancel() {
-    Navigator.of(context).pop();
   }
 
   @override
@@ -85,6 +42,52 @@ class _SubcategoryFormBottomSheetState
     final screenHeight = mediaQuery.size.height;
     final viewInsets = mediaQuery.viewInsets;
     _isDark = Theme.of(context).brightness == Brightness.dark;
+    final categories = ref.watch(categoryProvider);
+
+    String? _getValidCategoryId() {
+      String? candidateId;
+
+      if (_selectedCategoryId != null) {
+        candidateId = _selectedCategoryId;
+      } else if (widget.subcategory != null) {
+        candidateId = widget.subcategory!.categoryId;
+      }
+
+      if (candidateId == null) {
+        return null;
+      }
+
+      final matchingCategories = categories.value!
+          .where(
+            (cat) => cat.id == candidateId,
+          )
+          .toList();
+
+      if (matchingCategories.length == 1) {
+        return candidateId;
+      }
+
+      if (_selectedCategoryId == candidateId && matchingCategories.isEmpty) {
+        setState(() {
+          _selectedCategoryId = null;
+        });
+      }
+
+      return null;
+    }
+
+    void _save() {
+      if (_formKey.currentState!.validate()) {
+        Navigator.of(context).pop({
+          'name': _nameController.text.trim(),
+          'categoryId': _selectedCategoryId,
+        });
+      }
+    }
+
+    void _cancel() {
+      Navigator.of(context).pop();
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -154,7 +157,7 @@ class _SubcategoryFormBottomSheetState
               ),
               SizedBox(height: screenHeight * 0.02),
               DropdownButtonFormField<String>(
-                value: _getValidCategoryId(),
+                initialValue: _getValidCategoryId(),
                 decoration: InputDecoration(
                   labelText: 'Category',
                   hintText: 'Select a category',
@@ -168,7 +171,7 @@ class _SubcategoryFormBottomSheetState
                   fontSize: screenWidth * 0.04,
                   color: _isDark ? Colors.white : Colors.grey[900],
                 ),
-                items: testCategories.map((category) {
+                items: categories.value!.map((category) {
                   return DropdownMenuItem<String>(
                     value: category.id,
                     child: Row(

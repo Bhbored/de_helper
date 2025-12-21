@@ -3,8 +3,6 @@ import 'package:uuid/uuid.dart';
 part 'subcategory.freezed.dart';
 part 'subcategory.g.dart';
 
-final uuid = const Uuid().v4();
-
 @freezed
 sealed class SubCategory with _$SubCategory {
   const factory SubCategory({
@@ -19,7 +17,7 @@ sealed class SubCategory with _$SubCategory {
     required String categoryId,
   }) {
     return SubCategory(
-      id: id ?? uuid,
+      id: id ?? Uuid().v4(),
       name: name,
       categoryId: categoryId,
     );
