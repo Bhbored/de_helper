@@ -14,7 +14,7 @@ class SettingsPage extends ConsumerWidget {
     final screenHeight = mediaQuery.size.height;
     final isDark = ref.watch(themeStateProvider);
 
-    AppDatabase db = ref.read(getDbProvider);
+    final db = ref.read(getDbProvider);
     void showClearDataConfirmation(BuildContext context) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       final screenWidth = MediaQuery.of(context).size.width;

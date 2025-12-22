@@ -32,7 +32,7 @@ class _SubcategoryCardState extends ConsumerState<SubcategoryCard> {
   IconData get _categoryIcon {
     final categories = ref.watch(categoryProvider);
     if (categories.value == null || categories.value!.isEmpty) {
-      return Icons.category; // Default icon if categories are not loaded
+      return Icons.category;
     }
     final category = categories.value!.firstWhere(
       (c) => c.id == widget.subcategory.categoryId,

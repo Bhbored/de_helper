@@ -241,12 +241,10 @@ class _ProductPageState extends ConsumerState<ProductPage> {
 
     final title = getTitle();
 
-    // Get category icon
     IconData? categoryIcon;
     if (widget.category != null) {
       categoryIcon = widget.category!.icon;
     } else if (widget.subCategory != null) {
-      // Get parent category icon from subcategory
       final categories = ref.watch(categoryProvider);
       if (categories.value != null) {
         try {
@@ -260,7 +258,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
       }
     }
 
-    // Export function - only available when accessed from category page (not subcategory)
     Future<void> exportToExcel() async {
       final displayedProducts = widget.subCategory != null
           ? ref.read(productsBySubProvider(widget.subCategory!.id))
@@ -278,7 +275,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
             return;
           }
 
-          // Show loading indicator
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -288,13 +284,11 @@ class _ProductPageState extends ConsumerState<ProductPage> {
           );
 
           try {
-            // Get all related data
             final categories = await ref.read(categoryProvider.future);
             final subCategories = await ref.read(subcategoryProvider.future);
             final colors = await ref.read(colorProvider.future);
             final measurements = await ref.read(measurementProvider.future);
 
-            // Export to Excel
             final filePath = await ExcelExport.exportProducts(
               products: products,
               category: widget.category!,
@@ -304,11 +298,9 @@ class _ProductPageState extends ConsumerState<ProductPage> {
               allMeasurements: measurements,
             );
 
-            // Close loading dialog
             if (mounted) Navigator.of(context).pop();
 
             if (filePath != null) {
-              // Share the file
               await ExcelExport.shareFile(filePath);
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -329,7 +321,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
               }
             }
           } catch (e) {
-            // Close loading dialog
             if (mounted) Navigator.of(context).pop();
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -353,7 +344,6 @@ class _ProductPageState extends ConsumerState<ProductPage> {
       );
     }
 
-    // Build actions list - only show export when accessed from category page
     final List<Widget>? appBarActions =
         (widget.category != null && widget.subCategory == null)
         ? [
@@ -574,9 +564,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                   },
                                   onDismissed: (direction) {
                                     if (direction ==
-                                        DismissDirection.endToStart) {
-                                      // deleteProduct(product);
-                                    }
+                                        DismissDirection.endToStart) {}
                                   },
                                   child: InkWell(
                                     onTap: () {

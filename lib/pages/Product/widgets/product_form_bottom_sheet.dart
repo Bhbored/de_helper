@@ -47,7 +47,7 @@ class _ProductFormBottomSheetState
   @override
   void initState() {
     super.initState();
-    // Initialize category ID
+
     if (widget.product != null) {
       _selectedCategoryId = widget.product!.categoryId;
     } else if (widget.subCategory != null) {
@@ -71,7 +71,6 @@ class _ProductFormBottomSheetState
       _selectedMeasurementId = widget.product!.measurementPresetId;
       _selectedSubCategoryId = widget.product!.subCategoryId;
     } else {
-      // For new products, subcategory defaults to null
       _selectedSubCategoryId = null;
     }
   }
@@ -88,7 +87,6 @@ class _ProductFormBottomSheetState
   }
 
   String _getCategoryId() {
-    // Use selected category if available, otherwise fall back to widget values
     if (_selectedCategoryId != null) {
       return _selectedCategoryId!;
     }
@@ -98,7 +96,7 @@ class _ProductFormBottomSheetState
     if (widget.category != null) {
       return widget.category!.id;
     }
-    // This should not happen, but provide a fallback
+
     return '';
   }
 
@@ -147,14 +145,12 @@ class _ProductFormBottomSheetState
     final colors = ref.watch(colorProvider);
     final measurements = ref.watch(measurementProvider);
 
-    // Get available subcategories for the selected category
     final availableSubcategories =
         subcategories.value
             ?.where((x) => x.categoryId == _getCategoryId())
             .toList() ??
         [];
 
-    // Determine if we should show category dropdown (when coming from category page, not subcategory)
     final showCategoryDropdown = widget.subCategory == null;
 
     return SafeArea(
@@ -454,7 +450,7 @@ class _ProductFormBottomSheetState
                           onChanged: (value) {
                             setState(() {
                               _selectedCategoryId = value;
-                              // Reset subcategory when category changes
+
                               _selectedSubCategoryId = null;
                             });
                           },
@@ -606,7 +602,6 @@ class _ProductFormBottomSheetState
                     ElevatedButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          // Validate subcategory belongs to selected category
                           String? validatedSubCategoryId =
                               _selectedSubCategoryId;
                           if (_selectedSubCategoryId != null) {
@@ -620,12 +615,11 @@ class _ProductFormBottomSheetState
                                         sub.id == _selectedSubCategoryId &&
                                         sub.categoryId == categoryId,
                                   );
-                              // If subcategory doesn't belong to the category, set it to null
+
                               if (!subcategoryBelongsToCategory) {
                                 validatedSubCategoryId = null;
                               }
                             } else {
-                              // If subcategories are not loaded, set to null to be safe
                               validatedSubCategoryId = null;
                             }
                           }

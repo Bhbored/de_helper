@@ -21,7 +21,6 @@ class MainDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // Drawer Header
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(screenWidth * 0.05),
@@ -84,7 +83,7 @@ class MainDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            // Drawer Body
+
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -124,7 +123,7 @@ class MainDrawer extends StatelessWidget {
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
                       onTap: () {
-                        Navigator.of(context).pop(); // Close drawer
+                        Navigator.of(context).pop();
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const SettingsPage(),

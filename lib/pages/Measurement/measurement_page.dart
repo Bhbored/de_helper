@@ -206,9 +206,6 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
     }
 
     void _handleDeleteSelected(List<MeasurementPreset> selectedMeasurements) {
-      // This method will be called with the selected measurements
-      // User will implement the actual deletion logic
-      // For now, just clear selection
       setState(() {
         _selectedMeasurementIds.clear();
         _isSelectionMode = false;

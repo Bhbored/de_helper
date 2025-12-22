@@ -51,22 +51,22 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     final position = _scrollController.position;
     final isAtBottom = position.pixels >= position.maxScrollExtent - 50;
     final isAtTop = position.pixels <= 50;
-    
+
     setState(() {
       _isAtBottom = isAtBottom;
-      _showScrollButton = !isAtTop; // Show button when not at top (including when at bottom)
+      _showScrollButton = !isAtTop;
     });
 
-    // Hide button while scrolling, show after scrolling stops
     _scrollHideTimer?.cancel();
     _scrollHideTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         final currentPosition = _scrollController.position;
-        final currentIsAtBottom = currentPosition.pixels >= currentPosition.maxScrollExtent - 50;
+        final currentIsAtBottom =
+            currentPosition.pixels >= currentPosition.maxScrollExtent - 50;
         final currentIsAtTop = currentPosition.pixels <= 50;
         setState(() {
           _isAtBottom = currentIsAtBottom;
-          _showScrollButton = !currentIsAtTop; // Show button when not at top
+          _showScrollButton = !currentIsAtTop;
         });
       }
     });
@@ -433,343 +433,354 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                 CustomScrollView(
                   controller: _scrollController,
                   slivers: [
-                SliverAppBar(
-                  expandedHeight: expandedHeight,
-                  floating: false,
-                  pinned: true,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
-                      decoration: BoxDecoration(gradient: gradient),
-                      padding: EdgeInsets.fromLTRB(
-                        horizontalPadding,
-                        screenHeight * 0.08,
-                        horizontalPadding,
-                        verticalPadding * 1.5,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'OVERALL STATISTICS',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.035,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[700],
-                              letterSpacing: 1.2,
-                            ),
+                    SliverAppBar(
+                      expandedHeight: expandedHeight,
+                      floating: false,
+                      pinned: true,
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Container(
+                          decoration: BoxDecoration(gradient: gradient),
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPadding,
+                            screenHeight * 0.08,
+                            horizontalPadding,
+                            verticalPadding * 1.5,
                           ),
-                          SizedBox(height: screenHeight * 0.02),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              StatCard(
-                                value: getTotalProducts().toString(),
-                                label: 'Total Products',
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
+                              Text(
+                                'OVERALL STATISTICS',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.035,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[700],
+                                  letterSpacing: 1.2,
+                                ),
                               ),
-                              StatCard(
-                                value: getTotalCategories().toString(),
-                                label: 'Total Categories',
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
-                              ),
-                              StatCard(
-                                value: getTotalSubcategories().toString(),
-                                label: 'Total Subcategories',
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
+                              SizedBox(height: screenHeight * 0.02),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  StatCard(
+                                    value: getTotalProducts().toString(),
+                                    label: 'Total Products',
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                  StatCard(
+                                    value: getTotalCategories().toString(),
+                                    label: 'Total Categories',
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                  StatCard(
+                                    value: getTotalSubcategories().toString(),
+                                    label: 'Total Subcategories',
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
+                        centerTitle: true,
                       ),
                     ),
-                    centerTitle: true,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(screenWidth * 0.06),
-                      topRight: Radius.circular(screenWidth * 0.06),
-                    ),
-                    child: Container(
-                      color: isDark ? Colors.grey[900] : Colors.white,
-                      padding: EdgeInsets.all(horizontalPadding),
-                      child: Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.grey[800] : Colors.white,
-                              borderRadius: BorderRadius.circular(
-                                screenWidth * 0.03,
+                    SliverToBoxAdapter(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(screenWidth * 0.06),
+                          topRight: Radius.circular(screenWidth * 0.06),
+                        ),
+                        child: Container(
+                          color: isDark ? Colors.grey[900] : Colors.white,
+                          padding: EdgeInsets.all(horizontalPadding),
+                          child: Column(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.grey[800]
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                    screenWidth * 0.03,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: _searchController,
+                                  builder: (context, value, child) {
+                                    return TextField(
+                                      controller: _searchController,
+                                      onChanged: filterCategories,
+                                      decoration: InputDecoration(
+                                        hintText: 'Search Categories...',
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey[400],
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.search,
+                                          color: Colors.grey[400],
+                                        ),
+                                        suffixIcon: value.text.isNotEmpty
+                                            ? IconButton(
+                                                icon: Icon(
+                                                  Icons.close,
+                                                  color: Colors.grey[400],
+                                                ),
+                                                onPressed: clearSearch,
+                                              )
+                                            : null,
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: horizontalPadding,
+                                          vertical: screenHeight * 0.02,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
+                              SizedBox(height: screenHeight * 0.02),
+                              SizedBox(width: screenWidth * 0.02),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                spacing: 10,
+                                children: [
+                                  SortButton(
+                                    label: 'None',
+                                    isActive: sortType == 'Products',
+                                    onTap: () {
+                                      setState(() => sortType = 'Products');
+                                      sortCategories();
+                                    },
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                  SortButton(
+                                    label: 'Sort: Alphabetical',
+                                    isActive: sortType == 'Alphabetical',
+                                    onTap: () {
+                                      setState(() => sortType = 'Alphabetical');
+                                      sortCategories();
+                                    },
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(
+                                height: viewInsets.bottom > 0
+                                    ? viewInsets.bottom
+                                    : 0,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_isSelectionMode && _selectedCategoryIds.isNotEmpty)
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _SelectionHeaderDelegate(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                              vertical: screenHeight * 0.015,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.grey[900] : Colors.white,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 8,
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _searchController,
-                              builder: (context, value, child) {
-                                return TextField(
-                                  controller: _searchController,
-                                  onChanged: filterCategories,
-                                  decoration: InputDecoration(
-                                    hintText: 'Search Categories...',
-                                    hintStyle: TextStyle(
-                                      color: Colors.grey[400],
-                                    ),
-                                    prefixIcon: Icon(
-                                      Icons.search,
-                                      color: Colors.grey[400],
-                                    ),
-                                    suffixIcon: value.text.isNotEmpty
-                                        ? IconButton(
-                                            icon: Icon(
-                                              Icons.close,
-                                              color: Colors.grey[400],
-                                            ),
-                                            onPressed: clearSearch,
-                                          )
-                                        : null,
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: horizontalPadding,
-                                      vertical: screenHeight * 0.02,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: exitSelectionMode,
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
                                     ),
                                   ),
-                                );
-                              },
+                                ),
+                                Text(
+                                  '${_selectedCategoryIds.length} selected',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.04,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.grey[900],
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final selectedCategories = x
+                                        .where(
+                                          (cat) => _selectedCategoryIds
+                                              .contains(cat.id),
+                                        )
+                                        .toList();
+                                    handleDeleteSelected(selectedCategories);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: screenWidth * 0.06,
+                                      vertical: screenHeight * 0.015,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: screenHeight * 0.02),
-                          SizedBox(width: screenWidth * 0.02),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            spacing: 10,
-                            children: [
-                              SortButton(
-                                label: 'None',
-                                isActive: sortType == 'Products',
-                                onTap: () {
-                                  setState(() => sortType = 'Products');
-                                  sortCategories();
-                                },
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
-                              ),
-                              SortButton(
-                                label: 'Sort: Alphabetical',
-                                isActive: sortType == 'Alphabetical',
-                                onTap: () {
-                                  setState(() => sortType = 'Alphabetical');
-                                  sortCategories();
-                                },
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: viewInsets.bottom > 0
-                                ? viewInsets.bottom
-                                : 0,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (_isSelectionMode && _selectedCategoryIds.isNotEmpty)
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _SelectionHeaderDelegate(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: horizontalPadding,
-                          vertical: screenHeight * 0.015,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.grey[900] : Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            TextButton(
-                              onPressed: exitSelectionMode,
-                              child: Text(
-                                'Cancel',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.04,
-                                  color: isDark
-                                      ? Colors.grey[400]
-                                      : Colors.grey[600],
-                                ),
-                              ),
-                            ),
-                            Text(
-                              '${_selectedCategoryIds.length} selected',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? Colors.white
-                                    : Colors.grey[900],
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                final selectedCategories = x
-                                    .where(
-                                      (cat) => _selectedCategoryIds
-                                          .contains(cat.id),
-                                    )
-                                    .toList();
-                                handleDeleteSelected(selectedCategories);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.06,
-                                  vertical: screenHeight * 0.015,
-                                ),
-                              ),
-                              child: Text(
-                                'Delete',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.04,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
+                          height: screenHeight * 0.08,
                         ),
                       ),
-                      height: screenHeight * 0.08,
-                    ),
-                  ),
-                x.isEmpty
-                    ? SliverFillRemaining(
-                        child: CategoryEmptyState(
-                          isDark: isDark,
-                          screenWidth: screenWidth,
-                          screenHeight: screenHeight,
-                        ),
-                      )
-                    : SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: horizontalPadding,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final category = x[index];
-                              final productCount = getProductCount(category.id);
-                              final isSelected = _selectedCategoryIds.contains(
-                                category.id,
-                              );
+                    x.isEmpty
+                        ? SliverFillRemaining(
+                            child: CategoryEmptyState(
+                              isDark: isDark,
+                              screenWidth: screenWidth,
+                              screenHeight: screenHeight,
+                            ),
+                          )
+                        : SliverPadding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final category = x[index];
+                                  final productCount = getProductCount(
+                                    category.id,
+                                  );
+                                  final isSelected = _selectedCategoryIds
+                                      .contains(
+                                        category.id,
+                                      );
 
-                              return GestureDetector(
-                                onLongPress: () {
-                                  if (!_isSelectionMode) {
-                                    setState(() {
-                                      _isSelectionMode = true;
-                                      _selectedCategoryIds.add(category.id);
-                                    });
-                                  }
-                                },
-                                onTap: _isSelectionMode
-                                    ? () {
-                                        toggleSelection(category.id);
+                                  return GestureDetector(
+                                    onLongPress: () {
+                                      if (!_isSelectionMode) {
+                                        setState(() {
+                                          _isSelectionMode = true;
+                                          _selectedCategoryIds.add(category.id);
+                                        });
                                       }
-                                    : null,
-                                behavior: _isSelectionMode
-                                    ? HitTestBehavior.opaque
-                                    : HitTestBehavior.translucent,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: screenHeight * 0.015,
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      Opacity(
-                                        opacity: isSelected ? 0.5 : 1.0,
-                                        child: CategoryCard(
-                                          category: category,
-                                          productCount: productCount,
-                                          isDark: isDark,
-                                          screenWidth: screenWidth,
-                                          screenHeight: screenHeight,
-                                          onEdit: _isSelectionMode
-                                              ? null
-                                              : () =>
-                                                    showEditCategoryBottomSheet(
+                                    },
+                                    onTap: _isSelectionMode
+                                        ? () {
+                                            toggleSelection(category.id);
+                                          }
+                                        : null,
+                                    behavior: _isSelectionMode
+                                        ? HitTestBehavior.opaque
+                                        : HitTestBehavior.translucent,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: screenHeight * 0.015,
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          Opacity(
+                                            opacity: isSelected ? 0.5 : 1.0,
+                                            child: CategoryCard(
+                                              category: category,
+                                              productCount: productCount,
+                                              isDark: isDark,
+                                              screenWidth: screenWidth,
+                                              screenHeight: screenHeight,
+                                              onEdit: _isSelectionMode
+                                                  ? null
+                                                  : () =>
+                                                        showEditCategoryBottomSheet(
+                                                          category,
+                                                        ),
+                                              onDelete: _isSelectionMode
+                                                  ? null
+                                                  : () => deleteCategory(
                                                       category,
                                                     ),
-                                          onDelete: _isSelectionMode
-                                              ? null
-                                              : () => deleteCategory(category),
-                                        ),
-                                      ),
-                                      if (_isSelectionMode)
-                                        Positioned(
-                                          top: screenWidth * 0.02,
-                                          right: screenWidth * 0.02,
-                                          child: Container(
-                                            width: screenWidth * 0.08,
-                                            height: screenWidth * 0.08,
-                                            decoration: BoxDecoration(
-                                              color: isSelected
-                                                  ? Colors.blue
-                                                  : Colors.transparent,
-                                              border: Border.all(
-                                                color: isSelected
-                                                    ? Colors.blue
-                                                    : Colors.grey,
-                                                width: 2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    screenWidth * 0.02,
-                                                  ),
                                             ),
-                                            child: isSelected
-                                                ? Icon(
-                                                    Icons.check,
-                                                    color: Colors.white,
-                                                    size: screenWidth * 0.05,
-                                                  )
-                                                : null,
                                           ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                            childCount: x.length,
+                                          if (_isSelectionMode)
+                                            Positioned(
+                                              top: screenWidth * 0.02,
+                                              right: screenWidth * 0.02,
+                                              child: Container(
+                                                width: screenWidth * 0.08,
+                                                height: screenWidth * 0.08,
+                                                decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? Colors.blue
+                                                      : Colors.transparent,
+                                                  border: Border.all(
+                                                    color: isSelected
+                                                        ? Colors.blue
+                                                        : Colors.grey,
+                                                    width: 2,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        screenWidth * 0.02,
+                                                      ),
+                                                ),
+                                                child: isSelected
+                                                    ? Icon(
+                                                        Icons.check,
+                                                        color: Colors.white,
+                                                        size:
+                                                            screenWidth * 0.05,
+                                                      )
+                                                    : null,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                childCount: x.length,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
                   ],
                 ),
                 if (_showScrollButton && !_isSelectionMode)

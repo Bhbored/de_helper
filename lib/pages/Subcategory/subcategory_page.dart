@@ -52,7 +52,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
     final position = _scrollController.position;
     final isAtBottom = position.pixels >= position.maxScrollExtent - 50;
     final isAtTop = position.pixels <= 50;
-    
+
     setState(() {
       _isAtBottom = isAtBottom;
       _showScrollButton = !isAtTop;
@@ -62,7 +62,8 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
     _scrollHideTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         final currentPosition = _scrollController.position;
-        final currentIsAtBottom = currentPosition.pixels >= currentPosition.maxScrollExtent - 50;
+        final currentIsAtBottom =
+            currentPosition.pixels >= currentPosition.maxScrollExtent - 50;
         final currentIsAtTop = currentPosition.pixels <= 50;
         setState(() {
           _isAtBottom = currentIsAtBottom;
@@ -260,10 +261,10 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
               TextButton(
                 onPressed: () async {
                   copied = subcategory;
-                  handleDelete(subcategory); // Await the async function
+                  handleDelete(subcategory);
                   await ref
                       .read(subcategoryProvider.notifier)
-                      .deleteCategory(id); // Also await this
+                      .deleteCategory(id);
                   if (context.mounted) {
                     Navigator.of(context).pop();
                   }
@@ -352,358 +353,363 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                 CustomScrollView(
                   controller: _scrollController,
                   slivers: [
-                SliverAppBar(
-                  expandedHeight: expandedHeight,
-                  floating: false,
-                  pinned: true,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Container(
-                      decoration: BoxDecoration(gradient: gradient),
-                      padding: EdgeInsets.fromLTRB(
-                        horizontalPadding,
-                        screenHeight * 0.08,
-                        horizontalPadding,
-                        verticalPadding * 1.5,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'OVERALL STATISTICS',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.035,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[700],
-                              letterSpacing: 1.2,
-                            ),
+                    SliverAppBar(
+                      expandedHeight: expandedHeight,
+                      floating: false,
+                      pinned: true,
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Container(
+                          decoration: BoxDecoration(gradient: gradient),
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPadding,
+                            screenHeight * 0.08,
+                            horizontalPadding,
+                            verticalPadding * 1.5,
                           ),
-                          SizedBox(height: screenHeight * 0.02),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              StatCard(
-                                value: getTotalProducts().toString(),
-                                label: 'Total Products',
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
+                              Text(
+                                'OVERALL STATISTICS',
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.035,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[700],
+                                  letterSpacing: 1.2,
+                                ),
                               ),
-                              StatCard(
-                                value: getTotalCategories().toString(),
-                                label: 'Total Categories',
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
-                              ),
-                              StatCard(
-                                value: getTotalSubcategories().toString(),
-                                label: 'Total Subcategories',
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
+                              SizedBox(height: screenHeight * 0.02),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  StatCard(
+                                    value: getTotalProducts().toString(),
+                                    label: 'Total Products',
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                  StatCard(
+                                    value: getTotalCategories().toString(),
+                                    label: 'Total Categories',
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                  StatCard(
+                                    value: getTotalSubcategories().toString(),
+                                    label: 'Total Subcategories',
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
+                        centerTitle: true,
                       ),
                     ),
-                    centerTitle: true,
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(screenWidth * 0.06),
-                      topRight: Radius.circular(screenWidth * 0.06),
-                    ),
-                    child: Container(
-                      color: isDark ? Colors.grey[900] : Colors.white,
-                      padding: EdgeInsets.all(horizontalPadding),
-                      child: Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.grey[800] : Colors.white,
-                              borderRadius: BorderRadius.circular(
-                                screenWidth * 0.03,
+                    SliverToBoxAdapter(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(screenWidth * 0.06),
+                          topRight: Radius.circular(screenWidth * 0.06),
+                        ),
+                        child: Container(
+                          color: isDark ? Colors.grey[900] : Colors.white,
+                          padding: EdgeInsets.all(horizontalPadding),
+                          child: Column(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.grey[800]
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                    screenWidth * 0.03,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: _searchController,
+                                  builder: (context, value, child) {
+                                    return TextField(
+                                      controller: _searchController,
+                                      onChanged: filterSubcategories,
+                                      decoration: InputDecoration(
+                                        hintText: 'Search Subcategories...',
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey[400],
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.search,
+                                          color: Colors.grey[400],
+                                        ),
+                                        suffixIcon: value.text.isNotEmpty
+                                            ? IconButton(
+                                                icon: Icon(
+                                                  Icons.close,
+                                                  color: Colors.grey[400],
+                                                ),
+                                                onPressed: clearSearch,
+                                              )
+                                            : null,
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: horizontalPadding,
+                                          vertical: screenHeight * 0.02,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
+                              SizedBox(height: screenHeight * 0.02),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  SortButton(
+                                    label: 'None',
+                                    isActive: _sortType == 'Products',
+                                    onTap: () {
+                                      setState(() => _sortType = 'Products');
+                                      sortSubcategories();
+                                    },
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  SortButton(
+                                    label: 'Sort: Alphabetical',
+                                    isActive: _sortType == 'Alphabetical',
+                                    onTap: () {
+                                      setState(
+                                        () => _sortType = 'Alphabetical',
+                                      );
+                                      sortSubcategories();
+                                    },
+                                    isDark: isDark,
+                                    screenWidth: screenWidth,
+                                    screenHeight: screenHeight,
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                ],
+                              ),
+                              SizedBox(
+                                height: viewInsets.bottom > 0
+                                    ? viewInsets.bottom
+                                    : 0,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_isSelectionMode && _selectedSubcategoryIds.isNotEmpty)
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _SelectionHeaderDelegate(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                              vertical: screenHeight * 0.015,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.grey[900] : Colors.white,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            child: ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _searchController,
-                              builder: (context, value, child) {
-                                return TextField(
-                                  controller: _searchController,
-                                  onChanged: filterSubcategories,
-                                  decoration: InputDecoration(
-                                    hintText: 'Search Subcategories...',
-                                    hintStyle: TextStyle(
-                                      color: Colors.grey[400],
-                                    ),
-                                    prefixIcon: Icon(
-                                      Icons.search,
-                                      color: Colors.grey[400],
-                                    ),
-                                    suffixIcon: value.text.isNotEmpty
-                                        ? IconButton(
-                                            icon: Icon(
-                                              Icons.close,
-                                              color: Colors.grey[400],
-                                            ),
-                                            onPressed: clearSearch,
-                                          )
-                                        : null,
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: horizontalPadding,
-                                      vertical: screenHeight * 0.02,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextButton(
+                                  onPressed: exitSelectionMode,
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[600],
                                     ),
                                   ),
-                                );
-                              },
+                                ),
+                                Text(
+                                  '${_selectedSubcategoryIds.length} selected',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.04,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.grey[900],
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    final selectedSubcategories =
+                                        displayedSubcategories.value!
+                                            .where(
+                                              (subcategory) =>
+                                                  _selectedSubcategoryIds
+                                                      .contains(
+                                                        subcategory.id,
+                                                      ),
+                                            )
+                                            .toList();
+                                    handleDeleteSelected(
+                                      selectedSubcategories,
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: screenWidth * 0.06,
+                                      vertical: screenHeight * 0.015,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Delete',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: screenHeight * 0.02),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              SortButton(
-                                label: 'None',
-                                isActive: _sortType == 'Products',
-                                onTap: () {
-                                  setState(() => _sortType = 'Products');
-                                  sortSubcategories();
-                                },
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                              SortButton(
-                                label: 'Sort: Alphabetical',
-                                isActive: _sortType == 'Alphabetical',
-                                onTap: () {
-                                  setState(
-                                    () => _sortType = 'Alphabetical',
+                          height: screenHeight * 0.08,
+                        ),
+                      ),
+                    displayedSubcategories.value!.isEmpty
+                        ? SliverFillRemaining(
+                            child: SubcategoryEmptyState(
+                              isDark: isDark,
+                              screenWidth: screenWidth,
+                              screenHeight: screenHeight,
+                            ),
+                          )
+                        : SliverPadding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                            ),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final subcategory =
+                                      displayedSubcategories.value![index];
+                                  final productCount = getProductCount(
+                                    subcategory.id,
                                   );
-                                  sortSubcategories();
-                                },
-                                isDark: isDark,
-                                screenWidth: screenWidth,
-                                screenHeight: screenHeight,
-                              ),
-                              SizedBox(width: screenWidth * 0.02),
-                            ],
-                          ),
-                          SizedBox(
-                            height: viewInsets.bottom > 0
-                                ? viewInsets.bottom
-                                : 0,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (_isSelectionMode && _selectedSubcategoryIds.isNotEmpty)
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _SelectionHeaderDelegate(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: horizontalPadding,
-                          vertical: screenHeight * 0.015,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.grey[900] : Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            TextButton(
-                              onPressed: exitSelectionMode,
-                              child: Text(
-                                'Cancel',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.04,
-                                  color: isDark
-                                      ? Colors.grey[400]
-                                      : Colors.grey[600],
-                                ),
-                              ),
-                            ),
-                            Text(
-                              '${_selectedSubcategoryIds.length} selected',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? Colors.white
-                                    : Colors.grey[900],
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                final selectedSubcategories =
-                                    displayedSubcategories.value!
-                                        .where(
-                                          (subcategory) =>
-                                              _selectedSubcategoryIds
-                                                  .contains(
-                                                    subcategory.id,
-                                                  ),
-                                        )
-                                        .toList();
-                                handleDeleteSelected(
-                                  selectedSubcategories,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.06,
-                                  vertical: screenHeight * 0.015,
-                                ),
-                              ),
-                              child: Text(
-                                'Delete',
-                                style: TextStyle(
-                                  fontSize: screenWidth * 0.04,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      height: screenHeight * 0.08,
-                    ),
-                  ),
-                displayedSubcategories.value!.isEmpty
-                    ? SliverFillRemaining(
-                        child: SubcategoryEmptyState(
-                          isDark: isDark,
-                          screenWidth: screenWidth,
-                          screenHeight: screenHeight,
-                        ),
-                      )
-                    : SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: horizontalPadding,
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final subcategory =
-                                  displayedSubcategories.value![index];
-                              final productCount = getProductCount(
-                                subcategory.id,
-                              );
-                              final isSelected = _selectedSubcategoryIds
-                                  .contains(subcategory.id);
+                                  final isSelected = _selectedSubcategoryIds
+                                      .contains(subcategory.id);
 
-                              return GestureDetector(
-                                onLongPress: () {
-                                  if (!_isSelectionMode) {
-                                    setState(() {
-                                      _isSelectionMode = true;
-                                      _selectedSubcategoryIds.add(
-                                        subcategory.id,
-                                      );
-                                    });
-                                  }
-                                },
-                                onTap: _isSelectionMode
-                                    ? () {
-                                        toggleSelection(subcategory.id);
+                                  return GestureDetector(
+                                    onLongPress: () {
+                                      if (!_isSelectionMode) {
+                                        setState(() {
+                                          _isSelectionMode = true;
+                                          _selectedSubcategoryIds.add(
+                                            subcategory.id,
+                                          );
+                                        });
                                       }
-                                    : null,
-                                behavior: _isSelectionMode
-                                    ? HitTestBehavior.opaque
-                                    : HitTestBehavior.translucent,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    bottom: screenHeight * 0.015,
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      Opacity(
-                                        opacity: isSelected ? 0.5 : 1.0,
-                                        child: SubcategoryCard(
-                                          subcategory: subcategory,
-                                          productCount: productCount,
-                                          isDark: isDark,
-                                          screenWidth: screenWidth,
-                                          screenHeight: screenHeight,
-                                          onEdit: _isSelectionMode
-                                              ? null
-                                              : () =>
-                                                    showEditSubcategoryBottomSheet(
+                                    },
+                                    onTap: _isSelectionMode
+                                        ? () {
+                                            toggleSelection(subcategory.id);
+                                          }
+                                        : null,
+                                    behavior: _isSelectionMode
+                                        ? HitTestBehavior.opaque
+                                        : HitTestBehavior.translucent,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: screenHeight * 0.015,
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          Opacity(
+                                            opacity: isSelected ? 0.5 : 1.0,
+                                            child: SubcategoryCard(
+                                              subcategory: subcategory,
+                                              productCount: productCount,
+                                              isDark: isDark,
+                                              screenWidth: screenWidth,
+                                              screenHeight: screenHeight,
+                                              onEdit: _isSelectionMode
+                                                  ? null
+                                                  : () =>
+                                                        showEditSubcategoryBottomSheet(
+                                                          subcategory,
+                                                        ),
+                                              onDelete: _isSelectionMode
+                                                  ? null
+                                                  : () => deleteSubcategory(
                                                       subcategory,
                                                     ),
-                                          onDelete: _isSelectionMode
-                                              ? null
-                                              : () => deleteSubcategory(
-                                                  subcategory,
-                                                ),
-                                        ),
-                                      ),
-                                      if (_isSelectionMode)
-                                        Positioned(
-                                          top: screenWidth * 0.02,
-                                          right: screenWidth * 0.02,
-                                          child: Container(
-                                            width: screenWidth * 0.08,
-                                            height: screenWidth * 0.08,
-                                            decoration: BoxDecoration(
-                                              color: isSelected
-                                                  ? Colors.blue
-                                                  : Colors.transparent,
-                                              border: Border.all(
-                                                color: isSelected
-                                                    ? Colors.blue
-                                                    : Colors.grey,
-                                                width: 2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    screenWidth * 0.02,
-                                                  ),
                                             ),
-                                            child: isSelected
-                                                ? Icon(
-                                                    Icons.check,
-                                                    color: Colors.white,
-                                                    size: screenWidth * 0.05,
-                                                  )
-                                                : null,
                                           ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                            childCount: displayedSubcategories.value!.length,
+                                          if (_isSelectionMode)
+                                            Positioned(
+                                              top: screenWidth * 0.02,
+                                              right: screenWidth * 0.02,
+                                              child: Container(
+                                                width: screenWidth * 0.08,
+                                                height: screenWidth * 0.08,
+                                                decoration: BoxDecoration(
+                                                  color: isSelected
+                                                      ? Colors.blue
+                                                      : Colors.transparent,
+                                                  border: Border.all(
+                                                    color: isSelected
+                                                        ? Colors.blue
+                                                        : Colors.grey,
+                                                    width: 2,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        screenWidth * 0.02,
+                                                      ),
+                                                ),
+                                                child: isSelected
+                                                    ? Icon(
+                                                        Icons.check,
+                                                        color: Colors.white,
+                                                        size:
+                                                            screenWidth * 0.05,
+                                                      )
+                                                    : null,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                childCount:
+                                    displayedSubcategories.value!.length,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-              ],
+                  ],
                 ),
                 if (_showScrollButton && !_isSelectionMode)
                   Positioned(
