@@ -32,6 +32,14 @@ class MeasurementPresetRepositoryImpl implements MeasurementPresetRepository {
   }
 
   @override
+  Future<MeasurementPreset?> getByName(String name) async {
+    final measurementPreset = await (_db.select(
+      _db.measurementPresets,
+    )..where((m) => m.name.equals(name))).getSingleOrNull();
+    return measurementPreset?.toDomain();
+  }
+
+  @override
   Future<void> create(MeasurementPreset measurementPreset) async {
     await _db
         .into(_db.measurementPresets)

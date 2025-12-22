@@ -35,7 +35,7 @@ final class MeasurementNotifierProvider
 }
 
 String _$measurementNotifierHash() =>
-    r'6ff35535e47d766f92024387c45d098d50e2607b';
+    r'0ce124e2f5565854b24c4276427b468a89efaa9c';
 
 abstract class _$MeasurementNotifier
     extends $AsyncNotifier<List<MeasurementPreset>> {

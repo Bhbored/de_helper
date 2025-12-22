@@ -35,6 +35,12 @@ class MeasurementNotifier extends _$MeasurementNotifier {
       (x) => x.id == id,
       orElse: () => throw StateError('Category $id isnt found '),
     );
+
+    // Prevent deletion of NULL preset
+    if (categoryToBeDeleted.name == 'NULL') {
+      throw StateError('Cannot delete NULL preset');
+    }
+
     state = AsyncValue.data(current.where((x) => x.id != id).toList());
     try {
       _repo.delete(id);
@@ -50,6 +56,10 @@ class MeasurementNotifier extends _$MeasurementNotifier {
     final current = state.value ?? [];
     final noteIndex = current.indexWhere((x) => x.id == id);
     if (noteIndex == -1) throw StateError('Product with id $id not found');
+
+    if (cat.name == 'NULL') {
+      throw StateError('Cannot update NULL preset');
+    }
 
     final oldTask = current[noteIndex];
     final updatedNotes = [...current];
@@ -82,8 +92,14 @@ class MeasurementNotifier extends _$MeasurementNotifier {
   }
 
   Future<void> deleteSelection(List<MeasurementPreset> measurments) async {
+    // Filter out NULL preset from deletion
+    final measurementsToDelete = measurments
+        .where((m) => m.name != 'NULL')
+        .toList();
+    if (measurementsToDelete.isEmpty) return;
+
     List<String> ids = [];
-    for (var x in measurments) {
+    for (var x in measurementsToDelete) {
       ids.add(x.id);
     }
     for (var y in ids) {

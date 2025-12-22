@@ -99,14 +99,16 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
             content: Text('SubCategory "${categoryToShow.name}" deleted'),
             action: SnackBarAction(
               label: 'Undo',
-              onPressed: () {
+              onPressed: () async {
                 if (mounted) {
-                  ref.read(subcategoryProvider.notifier).addCategory(copied!);
+                  await ref
+                      .read(subcategoryProvider.notifier)
+                      .addCategory(copied!);
                 }
                 copied = null;
               },
             ),
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 2),
           ),
         );
       }

@@ -5,6 +5,8 @@ abstract class MeasurementPresetRepository {
 
   Future<MeasurementPreset?> getById(String id);
 
+  Future<MeasurementPreset?> getByName(String name);
+
   Future<void> create(MeasurementPreset measurementPreset);
 
   Future<void> update(MeasurementPreset measurementPreset);

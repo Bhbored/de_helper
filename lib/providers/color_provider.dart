@@ -36,6 +36,12 @@ class ColorNotifier extends _$ColorNotifier {
       (x) => x.id == id,
       orElse: () => throw StateError('Category $id isnt found '),
     );
+
+    // Prevent deletion of NULL preset
+    if (categoryToBeDeleted.name == 'NULL') {
+      throw StateError('Cannot delete NULL preset');
+    }
+
     state = AsyncValue.data(current.where((x) => x.id != id).toList());
     try {
       _repo.delete(id);
@@ -51,6 +57,9 @@ class ColorNotifier extends _$ColorNotifier {
     final current = state.value ?? [];
     final noteIndex = current.indexWhere((x) => x.id == id);
     if (noteIndex == -1) throw StateError('Product with id $id not found');
+    if (cat.name == 'NULL') {
+      throw StateError('Cannot update NULL preset');
+    }
 
     final oldTask = current[noteIndex];
     final updatedNotes = [...current];
@@ -85,8 +94,12 @@ class ColorNotifier extends _$ColorNotifier {
   }
 
   Future<void> deleteSelection(List<ColorPreset> colors) async {
+    // Filter out NULL preset from deletion
+    final colorsToDelete = colors.where((c) => c.name != 'NULL').toList();
+    if (colorsToDelete.isEmpty) return;
+
     List<String> ids = [];
-    for (var x in colors) {
+    for (var x in colorsToDelete) {
       ids.add(x.id);
     }
     for (var y in ids) {

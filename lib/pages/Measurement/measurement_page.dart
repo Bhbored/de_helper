@@ -519,9 +519,10 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                     .contains(
                                       measurement.id,
                                     );
+                                final isNullPreset = measurement.name == 'NULL';
                                 return GestureDetector(
                                   onLongPress: () {
-                                    if (!_isSelectionMode) {
+                                    if (!_isSelectionMode && !isNullPreset) {
                                       setState(() {
                                         _isSelectionMode = true;
                                         _selectedMeasurementIds.add(
@@ -530,7 +531,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                       });
                                     }
                                   },
-                                  onTap: _isSelectionMode
+                                  onTap: _isSelectionMode && !isNullPreset
                                       ? () {
                                           toggleSelection(measurement.id);
                                         }
@@ -578,7 +579,8 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                                   ),
                                                 ),
                                               ),
-                                              if (!_isSelectionMode) ...[
+                                              if (!_isSelectionMode &&
+                                                  !isNullPreset) ...[
                                                 Positioned(
                                                   top: screenWidth * 0.01,
                                                   right: screenWidth * 0.01,
@@ -642,7 +644,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                           ),
                                         ),
                                       ),
-                                      if (_isSelectionMode)
+                                      if (_isSelectionMode && !isNullPreset)
                                         Positioned(
                                           top: screenWidth * 0.02,
                                           right: screenWidth * 0.02,

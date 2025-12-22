@@ -5,6 +5,8 @@ abstract class ColorPresetRepository {
 
   Future<ColorPreset?> getById(String id);
 
+  Future<ColorPreset?> getByName(String name);
+
   Future<void> create(ColorPreset colorPreset);
 
   Future<void> update(ColorPreset colorPreset);

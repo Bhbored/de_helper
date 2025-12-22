@@ -33,6 +33,14 @@ class ColorPresetRepositoryImpl implements ColorPresetRepository {
   }
 
   @override
+  Future<ColorPreset?> getByName(String name) async {
+    final colorPreset = await (_db.select(
+      _db.colorPresets,
+    )..where((c) => c.name.equals(name))).getSingleOrNull();
+    return colorPreset?.toDomain();
+  }
+
+  @override
   Future<void> create(ColorPreset colorPreset) async {
     await _db.into(_db.colorPresets).insert(colorPreset.toCompanion());
   }

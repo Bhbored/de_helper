@@ -1,10 +1,16 @@
+import 'package:de_helper/data/repos/color_preset_repository_impl.dart';
+import 'package:de_helper/data/repos/measurement_preset_repository_impl.dart';
+import 'package:de_helper/models/color_preset.dart';
+import 'package:de_helper/models/measurement.dart';
+import 'package:de_helper/pages/Category/category_page.dart';
+import 'package:de_helper/pages/Color/color_page.dart';
+import 'package:de_helper/pages/Measurement/measurement_page.dart';
+import 'package:de_helper/pages/Subcategory/subcategory_page.dart';
+import 'package:de_helper/providers/color_provider.dart';
+import 'package:de_helper/providers/measurement_provider.dart';
+import 'package:de_helper/widgets/main_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:de_helper/pages/Category/category_page.dart';
-import 'package:de_helper/pages/Subcategory/subcategory_page.dart';
-import 'package:de_helper/pages/Measurement/measurement_page.dart';
-import 'package:de_helper/pages/Color/color_page.dart';
-import 'package:de_helper/widgets/main_drawer.dart';
 
 class NavContainer extends ConsumerStatefulWidget {
   const NavContainer({super.key});
@@ -27,6 +33,41 @@ class _NavContainerState extends ConsumerState<NavContainer> {
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeNullPresets();
+    });
+  }
+
+  void _initializeNullPresets() async {
+    try {
+      final colorRepo = ref.read(colorRepoProvider);
+      final measurementRepo = ref.read(measurmentRepoProvider);
+
+      final nullColor = await colorRepo.getByName('NULL');
+      if (nullColor == null) {
+        await ref
+            .read(colorProvider.notifier)
+            .addProduct(
+              ColorPreset(id: '', name: 'NULL', hexCode: '808080'),
+            );
+      }
+
+      final nullMeasurement = await measurementRepo.getByName('NULL');
+      if (nullMeasurement == null) {
+        await ref
+            .read(measurementProvider.notifier)
+            .addMeasurement(
+              MeasurementPreset(id: '', name: 'NULL'),
+            );
+      }
+    } catch (e) {
+      // Silently fail
+    }
   }
 
   @override
