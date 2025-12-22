@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:de_helper/models/product.dart';
 import 'package:de_helper/providers/color_provider.dart';
+import 'package:de_helper/providers/helpers_providers.dart';
+import 'package:de_helper/providers/product_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/color_preset.dart';
 import 'package:de_helper/utility/theme_selector.dart';
@@ -98,6 +101,27 @@ class _ColorPageState extends ConsumerState<ColorPage> {
     final verticalPadding = screenHeight * 0.02;
     final expandedHeight = screenHeight * 0.22;
 
+    ref.listen(colorProvider, (previous, next) {
+      if (copied != null && next.value!.length < previous!.value!.length) {
+        final categoryToShow = copied!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Color "${categoryToShow.name}" deleted'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                if (mounted) {
+                  ref.read(colorProvider.notifier).addProduct(copied!);
+                }
+                copied = null;
+              },
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    });
+
     void sortColors() {
       final currentList = ref.read(colorProvider).value;
       if (currentList != null) {
@@ -189,6 +213,17 @@ class _ColorPageState extends ConsumerState<ColorPage> {
       });
     }
 
+    Future<void> handleDelete(ColorPreset selectedColor) async {
+      final subProducts = await ref.read(
+        productsByColorProvider(selectedColor.id).future,
+      );
+
+      for (final product in subProducts) {
+        final updatedProduct = product.copyWith(colorPresetId: '');
+        await ref.read(prodcutProvider.notifier).updateProduct(updatedProduct);
+      }
+    }
+
     void deleteColor(ColorPreset colorPreset) {
       final id = colorPreset.id;
       showDialog(
@@ -227,6 +262,7 @@ class _ColorPageState extends ConsumerState<ColorPage> {
               TextButton(
                 onPressed: () {
                   copied = colorPreset;
+                  handleDelete(colorPreset);
                   notifier.deleteProduct(id);
                   Navigator.of(context).pop();
                 },
@@ -244,17 +280,29 @@ class _ColorPageState extends ConsumerState<ColorPage> {
       );
     }
 
-    void _handleDeleteSelected(List<ColorPreset> selectedColors) {
-      // This method will be called with the selected colors
-      // User will implement the actual deletion logic
-      // For now, just clear selection
+    void handleDeleteSelected(List<ColorPreset> selectedColors) async {
+      final productsToUpdate = <Product>[];
+      for (final color in selectedColors) {
+        final subProducts = await ref.read(
+          productsByColorProvider(color.id).future,
+        );
+        productsToUpdate.addAll(
+          subProducts.map((p) => p.copyWith(colorPresetId: '')),
+        );
+      }
+
+      for (final product in productsToUpdate) {
+        await ref.read(prodcutProvider.notifier).updateProduct(product);
+      }
+
+      await ref.read(colorProvider.notifier).deleteSelection(selectedColors);
       setState(() {
         _selectedColorIds.clear();
         _isSelectionMode = false;
       });
     }
 
-    void _toggleSelection(String colorId) {
+    void toggleSelection(String colorId) {
       setState(() {
         if (_selectedColorIds.contains(colorId)) {
           _selectedColorIds.remove(colorId);
@@ -270,7 +318,7 @@ class _ColorPageState extends ConsumerState<ColorPage> {
       });
     }
 
-    void _exitSelectionMode() {
+    void exitSelectionMode() {
       setState(() {
         _isSelectionMode = false;
         _selectedColorIds.clear();
@@ -285,6 +333,7 @@ class _ColorPageState extends ConsumerState<ColorPage> {
         onRefresh: () async {
           ref.invalidate(colorProvider);
           ref.read(colorProvider.future);
+          exitSelectionMode();
         },
         child: displayedColors.when(
           data: (data) => Stack(
@@ -422,7 +471,7 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               TextButton(
-                                onPressed: _exitSelectionMode,
+                                onPressed: exitSelectionMode,
                                 child: Text(
                                   'Cancel',
                                   style: TextStyle(
@@ -452,7 +501,7 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                                         ),
                                       )
                                       .toList();
-                                  _handleDeleteSelected(selectedColors);
+                                  handleDeleteSelected(selectedColors);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
@@ -514,7 +563,7 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                                   },
                                   onTap: _isSelectionMode
                                       ? () {
-                                          _toggleSelection(colorPreset.id);
+                                          toggleSelection(colorPreset.id);
                                         }
                                       : null,
                                   behavior: _isSelectionMode
@@ -762,6 +811,7 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                   left: screenWidth * 0.05,
                   bottom: screenHeight * 0.02,
                   child: FloatingActionButton(
+                    heroTag: 'color_scroll_button',
                     mini: true,
                     onPressed: _scrollToPosition,
                     backgroundColor: isDark ? Colors.green[700] : Colors.blue,

@@ -16,3 +16,24 @@ FutureOr<List<Product>> productsBySub(Ref ref, String subId) async {
   var filterProducts = products.where((x) => x.subCategoryId == subId).toList();
   return filterProducts;
 }
+
+@Riverpod(keepAlive: true)
+FutureOr<List<Product>> productsByColor(Ref ref, String colorId) async {
+  var products = await ref.watch(prodcutProvider.future);
+  var filterProducts = products
+      .where((x) => x.colorPresetId == colorId)
+      .toList();
+  return filterProducts;
+}
+
+@Riverpod(keepAlive: true)
+FutureOr<List<Product>> productsByMeasurement(
+  Ref ref,
+  String measurementId,
+) async {
+  var products = await ref.watch(prodcutProvider.future);
+  var filterProducts = products
+      .where((x) => x.measurementPresetId == measurementId)
+      .toList();
+  return filterProducts;
+}

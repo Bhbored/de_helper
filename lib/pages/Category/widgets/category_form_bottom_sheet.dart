@@ -122,7 +122,7 @@ class _CategoryFormBottomSheetState extends State<CategoryFormBottomSheet> {
               ),
               SizedBox(height: screenHeight * 0.02),
               DropdownButtonFormField<String>(
-                value: _selectedIconKey,
+                initialValue: _selectedIconKey,
                 decoration: InputDecoration(
                   labelText: 'Icon',
                   hintText: 'Select an icon',

@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:de_helper/models/product.dart';
+import 'package:de_helper/providers/helpers_providers.dart';
 import 'package:de_helper/providers/measurement_provider.dart';
+import 'package:de_helper/providers/product_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/models/measurement.dart';
 import 'package:de_helper/utility/theme_selector.dart';
@@ -98,6 +101,28 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
     final displayedMeasurements = ref.watch(measurementProvider);
     final notifier = ref.read(measurementProvider.notifier);
 
+    ref.listen(measurementProvider, (previous, next) {
+      if (copied != null && next.value!.length < previous!.value!.length) {
+        final categoryToShow = copied!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Measurement "${categoryToShow.name}" deleted'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                if (mounted) {
+                  ref
+                      .read(measurementProvider.notifier)
+                      .addMeasurement(copied!);
+                }
+                copied = null;
+              },
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    });
     void filterMeasurements(String query) {
       if (query.isEmpty) {
         notifier.refreshMeasurement();
@@ -150,6 +175,17 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
       });
     }
 
+    Future<void> handleDelete(MeasurementPreset selectedMeasurement) async {
+      final subProducts = await ref.read(
+        productsByMeasurementProvider(selectedMeasurement.id).future,
+      );
+
+      for (final product in subProducts) {
+        final updatedProduct = product.copyWith(measurementPresetId: '');
+        await ref.read(prodcutProvider.notifier).updateProduct(updatedProduct);
+      }
+    }
+
     void deleteMeasurement(MeasurementPreset measurement) {
       final id = measurement.id;
       showDialog(
@@ -188,6 +224,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
               TextButton(
                 onPressed: () {
                   copied = measurement;
+                  handleDelete(measurement);
                   notifier.deleteMeasurement(id);
                   Navigator.of(context).pop();
                 },
@@ -205,14 +242,33 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
       );
     }
 
-    void _handleDeleteSelected(List<MeasurementPreset> selectedMeasurements) {
+    void handleDeleteSelected(
+      List<MeasurementPreset> selectedMeasurements,
+    ) async {
+      final productsToUpdate = <Product>[];
+      for (final x in selectedMeasurements) {
+        final subProducts = await ref.read(
+          productsByMeasurementProvider(x.id).future,
+        );
+        productsToUpdate.addAll(
+          subProducts.map((p) => p.copyWith(measurementPresetId: '')),
+        );
+      }
+
+      for (final product in productsToUpdate) {
+        await ref.read(prodcutProvider.notifier).updateProduct(product);
+      }
+
+      await ref
+          .read(measurementProvider.notifier)
+          .deleteSelection(selectedMeasurements);
       setState(() {
         _selectedMeasurementIds.clear();
         _isSelectionMode = false;
       });
     }
 
-    void _toggleSelection(String measurementId) {
+    void toggleSelection(String measurementId) {
       setState(() {
         if (_selectedMeasurementIds.contains(measurementId)) {
           _selectedMeasurementIds.remove(measurementId);
@@ -228,7 +284,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
       });
     }
 
-    void _exitSelectionMode() {
+    void exitSelectionMode() {
       setState(() {
         _isSelectionMode = false;
         _selectedMeasurementIds.clear();
@@ -243,6 +299,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
         onRefresh: () async {
           ref.invalidate(measurementProvider);
           ref.read(measurementProvider.future);
+          exitSelectionMode();
         },
         child: displayedMeasurements.when(
           data: (data) => Stack(
@@ -380,7 +437,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               TextButton(
-                                onPressed: _exitSelectionMode,
+                                onPressed: exitSelectionMode,
                                 child: Text(
                                   'Cancel',
                                   style: TextStyle(
@@ -411,7 +468,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                                     .contains(measurement.id),
                                           )
                                           .toList();
-                                  _handleDeleteSelected(selectedMeasurements);
+                                  handleDeleteSelected(selectedMeasurements);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
@@ -475,7 +532,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                   },
                                   onTap: _isSelectionMode
                                       ? () {
-                                          _toggleSelection(measurement.id);
+                                          toggleSelection(measurement.id);
                                         }
                                       : null,
                                   behavior: _isSelectionMode
@@ -632,6 +689,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                   left: screenWidth * 0.05,
                   bottom: screenHeight * 0.02,
                   child: FloatingActionButton(
+                    heroTag: 'measurement_scroll_button',
                     mini: true,
                     onPressed: _scrollToPosition,
                     backgroundColor: isDark ? Colors.green[700] : Colors.blue,

@@ -788,6 +788,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                     left: screenWidth * 0.05,
                     bottom: screenHeight * 0.02,
                     child: FloatingActionButton(
+                      heroTag: 'category_scroll_button',
                       mini: true,
                       onPressed: _scrollToPosition,
                       backgroundColor: isDark ? Colors.green[700] : Colors.blue,

@@ -167,11 +167,11 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
       return products.value?.length ?? 0;
     }
 
-    int getTotalProducts() => products.value!.length;
+    int getTotalProducts() => products.value?.length ?? 0;
 
-    int getTotalCategories() => categories.value!.length;
+    int getTotalCategories() => categories.value?.length ?? 0;
 
-    int getTotalSubcategories() => displayedSubcategories.value!.length;
+    int getTotalSubcategories() => displayedSubcategories.value?.length ?? 0;
 
     void showAddSubcategoryBottomSheet() {
       showModalBottomSheet(
@@ -716,6 +716,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                     left: screenWidth * 0.05,
                     bottom: screenHeight * 0.02,
                     child: FloatingActionButton(
+                      heroTag: 'subcategory_scroll_button',
                       mini: true,
                       onPressed: _scrollToPosition,
                       backgroundColor: isDark ? Colors.green[700] : Colors.blue,

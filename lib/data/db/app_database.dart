@@ -39,11 +39,11 @@ class AppDatabase extends _$AppDatabase {
   );
 
   Future<void> deleteDatabase() async {
+    await delete(products).go();
     await delete(categories).go();
     await delete(subCategories).go();
     await delete(colorPresets).go();
     await delete(measurementPresets).go();
-    await delete(products).go();
   }
 }
 

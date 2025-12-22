@@ -1,4 +1,9 @@
 import 'package:de_helper/data/db/app_database.dart';
+import 'package:de_helper/providers/category_provider.dart';
+import 'package:de_helper/providers/color_provider.dart';
+import 'package:de_helper/providers/measurement_provider.dart';
+import 'package:de_helper/providers/product_provider.dart';
+import 'package:de_helper/providers/subcategory_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:de_helper/providers/theme_provider.dart';
@@ -51,6 +56,20 @@ class SettingsPage extends ConsumerWidget {
             TextButton(
               onPressed: () {
                 db.deleteDatabase();
+                ref.invalidate(categoryProvider);
+                ref.invalidate(subcategoryProvider);
+                ref.invalidate(prodcutProvider);
+                ref.invalidate(colorProvider);
+                ref.invalidate(measurementProvider);
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('All data cleared successfully'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
                 Navigator.of(context).pop();
               },
               child: Text(

@@ -423,7 +423,7 @@ class _ProductFormBottomSheetState
                       SizedBox(height: screenHeight * 0.02),
                       if (showCategoryDropdown)
                         DropdownButtonFormField<String>(
-                          value:
+                          initialValue:
                               categories.value?.any(
                                     (category) =>
                                         category.id == _selectedCategoryId,
@@ -540,7 +540,7 @@ class _ProductFormBottomSheetState
                       SizedBox(height: screenHeight * 0.02),
                       if (availableSubcategories.isNotEmpty)
                         DropdownButtonFormField<String>(
-                          value:
+                          initialValue:
                               _selectedSubCategoryId == null ||
                                   availableSubcategories.any(
                                     (subCategory) =>
