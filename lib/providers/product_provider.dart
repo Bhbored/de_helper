@@ -75,4 +75,34 @@ class ProdcutNotifier extends _$ProdcutNotifier {
         .toList();
     state = AsyncValue.data(newList);
   }
+
+  Future<void> deleteSelection(List<Product> products) async {
+    if (products.isEmpty) return;
+
+    List<String> ids = [];
+    for (var x in products) {
+      ids.add(x.id);
+    }
+    for (var y in ids) {
+      _repo.delete(y);
+    }
+    refreshProduct();
+  }
+
+  Future<void> updateSelection(
+    List<Product> products,
+    String newCategoryId,
+  ) async {
+    if (products.isEmpty) return;
+    try {
+      for (final product in products) {
+        await _repo.update(
+          product.copyWith(categoryId: newCategoryId, subCategoryId: null),
+        );
+      }
+      refreshProduct();
+    } catch (e) {
+      throw StateError('Error updating products: $e');
+    }
+  }
 }

@@ -145,6 +145,29 @@ class _ProductFormBottomSheetState
     final colors = ref.watch(colorProvider);
     final measurements = ref.watch(measurementProvider);
 
+    // Get NULL color and measurement IDs for initial values
+    String? nullColorId;
+    if (colors.value != null && colors.value!.isNotEmpty) {
+      try {
+        nullColorId = colors.value!
+            .firstWhere((color) => color.name == 'NULL')
+            .id;
+      } catch (e) {
+        nullColorId = colors.value!.first.id;
+      }
+    }
+
+    String? nullMeasurementId;
+    if (measurements.value != null && measurements.value!.isNotEmpty) {
+      try {
+        nullMeasurementId = measurements.value!
+            .firstWhere((measurement) => measurement.name == 'NULL')
+            .id;
+      } catch (e) {
+        nullMeasurementId = measurements.value!.first.id;
+      }
+    }
+
     final availableSubcategories =
         subcategories.value
             ?.where((x) => x.categoryId == _getCategoryId())
@@ -464,13 +487,14 @@ class _ProductFormBottomSheetState
                       if (showCategoryDropdown)
                         SizedBox(height: screenHeight * 0.02),
                       DropdownButtonFormField<String>(
-                        initialValue:
-                            colors.value?.any(
-                                  (color) => color.id == _selectedColorId,
-                                ) ==
-                                true
-                            ? _selectedColorId
-                            : null,
+                        initialValue: widget.product != null
+                            ? (colors.value?.any(
+                                        (color) => color.id == _selectedColorId,
+                                      ) ==
+                                      true
+                                  ? _selectedColorId
+                                  : null)
+                            : nullColorId,
                         decoration: InputDecoration(
                           labelText: 'Color',
                           border: OutlineInputBorder(
@@ -489,7 +513,7 @@ class _ProductFormBottomSheetState
                             [],
                         onChanged: (value) {
                           setState(() {
-                            _selectedColorId = value;
+                            _selectedColorId = value ?? nullColorId;
                           });
                         },
                         validator: (value) {
@@ -501,14 +525,16 @@ class _ProductFormBottomSheetState
                       ),
                       SizedBox(height: screenHeight * 0.02),
                       DropdownButtonFormField<String>(
-                        initialValue:
-                            measurements.value?.any(
-                                  (measurement) =>
-                                      measurement.id == _selectedMeasurementId,
-                                ) ==
-                                true
-                            ? _selectedMeasurementId
-                            : null,
+                        initialValue: widget.product != null
+                            ? (measurements.value?.any(
+                                        (measurement) =>
+                                            measurement.id ==
+                                            _selectedMeasurementId,
+                                      ) ==
+                                      true
+                                  ? _selectedMeasurementId
+                                  : null)
+                            : nullMeasurementId,
                         decoration: InputDecoration(
                           labelText: 'Measurement Unit',
                           border: OutlineInputBorder(
@@ -527,7 +553,7 @@ class _ProductFormBottomSheetState
                             [],
                         onChanged: (value) {
                           setState(() {
-                            _selectedMeasurementId = value;
+                            _selectedMeasurementId = value ?? nullMeasurementId;
                           });
                         },
                         validator: (value) {

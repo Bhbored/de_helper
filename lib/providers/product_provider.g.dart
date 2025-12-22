@@ -33,7 +33,7 @@ final class ProdcutNotifierProvider
   ProdcutNotifier create() => ProdcutNotifier();
 }
 
-String _$prodcutNotifierHash() => r'4513d978ff7363caebe8ab91a4d2158dd9a18180';
+String _$prodcutNotifierHash() => r'b5372fd8110767524eb9976d9ea2790b0e4e719e';
 
 abstract class _$ProdcutNotifier extends $AsyncNotifier<List<Product>> {
   FutureOr<List<Product>> build();

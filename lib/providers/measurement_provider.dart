@@ -92,7 +92,6 @@ class MeasurementNotifier extends _$MeasurementNotifier {
   }
 
   Future<void> deleteSelection(List<MeasurementPreset> measurments) async {
-    // Filter out NULL preset from deletion
     final measurementsToDelete = measurments
         .where((m) => m.name != 'NULL')
         .toList();
