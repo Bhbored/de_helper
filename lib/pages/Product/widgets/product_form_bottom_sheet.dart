@@ -71,7 +71,6 @@ class _ProductFormBottomSheetState
       _selectedMeasurementId = widget.product!.measurementPresetId;
       _selectedSubCategoryId = widget.product!.subCategoryId;
     } else {
-      // When adding a new product, if subCategory is provided, set it as default
       if (widget.subCategory != null) {
         _selectedSubCategoryId = widget.subCategory!.id;
       } else {
