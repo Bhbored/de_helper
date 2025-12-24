@@ -19,7 +19,7 @@
 - **📈 Excel Export**: Generate an organized Excel sheet from the entered data.
 - **⚡ Efficiency**: Reduce the need for repetitive physical interaction with the POS system.
 - **📋 Simple Interface**: Designed for ease of use in a work environment.
-- **📷 QR/Barcode Scanner**: Integrated mobile scanner for quick item identification (if implemented).
+- **📷 QR/Barcode Scanner**: Integrated mobile scanner for quick item identification.
 - **💾 Local Database**: Uses Drift for local data persistence.
 
 ---
