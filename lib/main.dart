@@ -1,4 +1,5 @@
 import 'package:de_helper/pages/nav_container.dart';
+import 'package:de_helper/pages/splash_screen.dart';
 import 'package:de_helper/providers/theme_provider.dart';
 import 'package:de_helper/utility/theme_selector.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,9 @@ class MyApp extends ConsumerWidget {
       theme: ThemeSelector.lightTheme,
       darkTheme: ThemeSelector.darkTheme,
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-      home: const NavContainer(),
+      home: SplashScreen(
+        child: const NavContainer(),
+      ),
     );
   }
 }

@@ -3,9 +3,9 @@ import 'package:de_helper/providers/measurement_provider.dart';
 import 'package:de_helper/providers/product_provider.dart';
 import 'package:de_helper/providers/subcategory_provider.dart';
 import 'package:de_helper/providers/category_provider.dart';
+import 'package:de_helper/utility/barcode_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:de_helper/models/product.dart';
 import 'package:de_helper/models/category.dart';
 import 'package:de_helper/models/subcategory.dart';
@@ -71,7 +71,12 @@ class _ProductFormBottomSheetState
       _selectedMeasurementId = widget.product!.measurementPresetId;
       _selectedSubCategoryId = widget.product!.subCategoryId;
     } else {
-      _selectedSubCategoryId = null;
+      // When adding a new product, if subCategory is provided, set it as default
+      if (widget.subCategory != null) {
+        _selectedSubCategoryId = widget.subCategory!.id;
+      } else {
+        _selectedSubCategoryId = null;
+      }
     }
   }
 
@@ -109,16 +114,16 @@ class _ProductFormBottomSheetState
 
   Future<void> _scanBarcode(TextEditingController controller) async {
     try {
-      final result = await Navigator.of(context).push<String>(
-        MaterialPageRoute(
-          builder: (context) => const _BarcodeScannerPage(),
-        ),
-      );
+      final result = await Navigator.of(context, rootNavigator: false)
+          .push<String>(
+            MaterialPageRoute(
+              builder: (context) => const BarcodeScannerPage(),
+            ),
+          );
 
       if (result != null && mounted) {
-        setState(() {
-          controller.text = result;
-        });
+        // Set text directly - the _hasScanned flag in scanner prevents multiple pops
+        controller.text = result;
       }
     } catch (e) {
       if (mounted) {
@@ -226,6 +231,7 @@ class _ProductFormBottomSheetState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      SizedBox(height: screenHeight * 0.02),
                       TextFormField(
                         controller: _nameController,
                         decoration: InputDecoration(
@@ -672,8 +678,8 @@ class _ProductFormBottomSheetState
                                 _secondaryBarcodeController.text.trim().isEmpty
                                 ? null
                                 : _secondaryBarcodeController.text.trim(),
-                            colorPresetId: _selectedColorId!,
-                            measurementPresetId: _selectedMeasurementId!,
+                            colorPresetId: _selectedColorId ?? '1',
+                            measurementPresetId: _selectedMeasurementId ?? '1',
                           );
 
                           if (widget.product == null) {
@@ -711,53 +717,6 @@ class _ProductFormBottomSheetState
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _BarcodeScannerPage extends StatefulWidget {
-  const _BarcodeScannerPage();
-
-  @override
-  State<_BarcodeScannerPage> createState() => _BarcodeScannerPageState();
-}
-
-class _BarcodeScannerPageState extends State<_BarcodeScannerPage> {
-  late final MobileScannerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = MobileScannerController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan Barcode'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.flash_on),
-            onPressed: () => _controller.toggleTorch(),
-          ),
-        ],
-      ),
-      body: MobileScanner(
-        controller: _controller,
-        onDetect: (capture) {
-          final List<Barcode> barcodes = capture.barcodes;
-          if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-            Navigator.of(context).pop(barcodes.first.rawValue);
-          }
-        },
       ),
     );
   }

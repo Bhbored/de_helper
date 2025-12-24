@@ -53,7 +53,7 @@ class _NavContainerState extends ConsumerState<NavContainer> {
         await ref
             .read(colorProvider.notifier)
             .addProduct(
-              ColorPreset(id: '', name: 'NULL', hexCode: '808080'),
+              ColorPreset(id: '1', name: 'NULL', hexCode: '808080'),
             );
       }
 
@@ -62,7 +62,7 @@ class _NavContainerState extends ConsumerState<NavContainer> {
         await ref
             .read(measurementProvider.notifier)
             .addMeasurement(
-              MeasurementPreset(id: '', name: 'NULL'),
+              MeasurementPreset(id: '1', name: 'NULL'),
             );
       }
     } catch (e) {

@@ -42,7 +42,6 @@ class SubCategoryRepositoryImpl implements SubCategoryRepository {
     await (_db.update(_db.subCategories)
           ..where((s) => s.id.equals(subCategory.id)))
         .write(subCategory.toCompanion());
-    print('update subcategory ${subCategory.name} suc');
   }
 
   @override

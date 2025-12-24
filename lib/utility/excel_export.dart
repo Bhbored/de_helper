@@ -174,12 +174,10 @@ class ExcelExport {
           await file.writeAsBytes(fileBytes);
           return filePath;
         } catch (e2) {
-          print('Error saving file: $e2');
           return null;
         }
       }
     } catch (e) {
-      print('Error exporting to Excel: $e');
       return null;
     }
   }
@@ -189,7 +187,6 @@ class ExcelExport {
       final file = XFile(filePath);
       await Share.shareXFiles([file], text: 'Product Export');
     } catch (e) {
-      print('Error sharing file: $e');
       rethrow;
     }
   }

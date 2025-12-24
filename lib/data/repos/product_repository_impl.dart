@@ -34,7 +34,6 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<void> create(Product product) async {
     await _db.into(_db.products).insert(product.toCompanion());
-    print('inserted product ${product.name} successfuly');
   }
 
   @override

@@ -124,7 +124,6 @@ class ProductDetailPage extends ConsumerWidget {
     final screenHeight = mediaQuery.size.height;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final horizontalPadding = screenWidth * 0.05;
-    print(product.toString());
     return PageScaffold(
       title: product.name,
       titleIcon: _getCategoryIcon(ref),

@@ -21,7 +21,6 @@ class CategoryRepositoryImpl implements CategoryRepository {
   @override
   Future<List<Category>> getAll() async {
     final categories = await _db.select(_db.categories).get();
-    print('fetched all category succesfully');
     return categories.map((c) => c.toDomain()).toList();
   }
 
@@ -36,7 +35,6 @@ class CategoryRepositoryImpl implements CategoryRepository {
   @override
   Future<void> create(Category category) async {
     await _db.into(_db.categories).insert(category.toCompanion());
-    print('category ${category.name} inserted!');
   }
 
   @override
@@ -44,12 +42,10 @@ class CategoryRepositoryImpl implements CategoryRepository {
     await (_db.update(
       _db.categories,
     )..where((c) => c.id.equals(category.id))).write(category.toCompanion());
-    print('category ${category.name} updated!');
   }
 
   @override
   Future<void> delete(String id) async {
     await (_db.delete(_db.categories)..where((c) => c.id.equals(id))).go();
-    print('category with id: $id deleted!');
   }
 }

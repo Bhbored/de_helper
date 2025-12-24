@@ -10,7 +10,6 @@ class SubcategoryNotifier extends _$SubcategoryNotifier {
 
   @override
   FutureOr<List<SubCategory>> build() async {
-    print('fetched all subcategory ');
     return _repository.getAll();
   }
 

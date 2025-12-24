@@ -1,5 +1,5 @@
 name: de_helper
-description: "A new Flutter project."
+description: "DE helper"
 
 publish_to: "none"
 
@@ -39,6 +39,19 @@ dev_dependencies:
   json_serializable: ^6.11.2
   riverpod_generator: ^3.0.3
   riverpod_lint: ^3.0.3
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
+  
+  assets:
+    - assets/app/
+    - assets/animations/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/app/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/app/app_icon.png"

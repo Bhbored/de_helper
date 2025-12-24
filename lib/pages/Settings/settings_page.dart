@@ -1,4 +1,7 @@
-import 'package:de_helper/data/db/app_database.dart';
+import 'package:de_helper/data/db/app_database.dart'
+    hide ColorPreset, MeasurementPreset;
+import 'package:de_helper/data/repos/color_preset_repository_impl.dart';
+import 'package:de_helper/data/repos/measurement_preset_repository_impl.dart';
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/color_provider.dart';
 import 'package:de_helper/providers/measurement_provider.dart';
@@ -8,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:de_helper/providers/theme_provider.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
+import 'package:de_helper/models/color_preset.dart';
+import 'package:de_helper/models/measurement.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -18,6 +23,32 @@ class SettingsPage extends ConsumerWidget {
     final screenWidth = mediaQuery.size.width;
     final screenHeight = mediaQuery.size.height;
     final isDark = ref.watch(themeStateProvider);
+    Future<void> initializeNullPresets() async {
+      try {
+        final colorRepo = ref.read(colorRepoProvider);
+        final measurementRepo = ref.read(measurmentRepoProvider);
+
+        final nullColor = await colorRepo.getByName('NULL');
+        if (nullColor == null) {
+          await ref
+              .read(colorProvider.notifier)
+              .addProduct(
+                ColorPreset(id: '1', name: 'NULL', hexCode: '808080'),
+              );
+        }
+
+        final nullMeasurement = await measurementRepo.getByName('NULL');
+        if (nullMeasurement == null) {
+          await ref
+              .read(measurementProvider.notifier)
+              .addMeasurement(
+                MeasurementPreset(id: '1', name: 'NULL'),
+              );
+        }
+      } catch (e) {
+        throw StateError('Error initializing null presets');
+      }
+    }
 
     final db = ref.read(getDbProvider);
     void showClearDataConfirmation(BuildContext context) {
@@ -54,13 +85,16 @@ class SettingsPage extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
-                db.deleteDatabase();
+              onPressed: () async {
+                await db.deleteDatabase();
+                await initializeNullPresets();
                 ref.invalidate(categoryProvider);
                 ref.invalidate(subcategoryProvider);
                 ref.invalidate(prodcutProvider);
                 ref.invalidate(colorProvider);
                 ref.invalidate(measurementProvider);
+                await ref.read(colorProvider.future);
+                await ref.read(measurementProvider.future);
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -69,8 +103,8 @@ class SettingsPage extends ConsumerWidget {
                       duration: Duration(seconds: 2),
                     ),
                   );
+                  Navigator.of(context).pop();
                 }
-                Navigator.of(context).pop();
               },
               child: Text(
                 'Clear',
