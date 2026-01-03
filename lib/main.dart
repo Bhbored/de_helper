@@ -21,9 +21,7 @@ class MyApp extends ConsumerWidget {
       theme: ThemeSelector.lightTheme,
       darkTheme: ThemeSelector.darkTheme,
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-      home: SplashScreen(
-        child: const NavContainer(),
-      ),
+      home: SplashScreen(child: const NavContainer()),
     );
   }
 }

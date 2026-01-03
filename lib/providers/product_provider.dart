@@ -69,10 +69,36 @@ class ProdcutNotifier extends _$ProdcutNotifier {
   void filterByName(String query) {
     final current = state.value ?? [];
     final newList = current
+        .where((cat) => cat.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+    state = AsyncValue.data(newList);
+  }
+
+  void filterByBarcode(String barcode) {
+    final current = state.value ?? [];
+    final barcodeLower = barcode.toLowerCase();
+    final newList = current
         .where(
-          (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
+          (cat) =>
+              cat.barcode.toLowerCase().contains(barcodeLower) ||
+              (cat.secondaryBarcode != null &&
+                  cat.secondaryBarcode!.toLowerCase().contains(barcodeLower)),
         )
         .toList();
+    state = AsyncValue.data(newList);
+  }
+
+  void filterByNameOrBarcode(String query) {
+    final current = state.value ?? [];
+    final queryLower = query.toLowerCase();
+    final newList = current.where((product) {
+      final nameMatch = product.name.toLowerCase().contains(queryLower);
+      final barcodeMatch =
+          product.barcode.toLowerCase().contains(queryLower) ||
+          (product.secondaryBarcode != null &&
+              product.secondaryBarcode!.toLowerCase().contains(queryLower));
+      return nameMatch || barcodeMatch;
+    }).toList();
     state = AsyncValue.data(newList);
   }
 

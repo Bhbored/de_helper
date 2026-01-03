@@ -31,6 +31,8 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
   bool _showScrollButton = false;
   bool _isAtBottom = false;
   Timer? _scrollHideTimer;
+  int _currentPage = 0;
+  static const int _itemsPerPage = 10;
 
   @override
   void initState() {
@@ -120,7 +122,21 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
           categories.value!.isEmpty) {
         ref.read(categoryProvider.notifier).refreshCategories();
       }
+      if (mounted) {
+        if (_searchController.text.isEmpty) {
+          ref.read(categoryProvider.notifier).refreshCategories();
+        }
+      }
+      if (mounted && categories.value != null) {
+        final totalPages = (categories.value!.length / _itemsPerPage).ceil();
+        if (_currentPage >= totalPages && totalPages > 0) {
+          setState(() {
+            _currentPage = totalPages - 1;
+          });
+        }
+      }
     });
+
     final products = ref.watch(prodcutProvider);
     final subcategories = ref.watch(subcategoryProvider);
     void sortCategories() {
@@ -145,6 +161,9 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     }
 
     void filterCategories(String query) {
+      setState(() {
+        _currentPage = 0;
+      });
       if (query.isEmpty) {
         ref.read(categoryProvider.notifier).refreshCategories();
       } else {
@@ -689,103 +708,182 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                               screenHeight: screenHeight,
                             ),
                           )
-                        : SliverPadding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: horizontalPadding,
-                            ),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate((
-                                context,
-                                index,
-                              ) {
-                                final category = x[index];
-                                final productCount = getProductCount(
-                                  category.id,
-                                );
-                                final isSelected = _selectedCategoryIds
-                                    .contains(category.id);
+                        : Builder(
+                            builder: (context) {
+                              final paginatedCategories = x
+                                  .skip(_currentPage * _itemsPerPage)
+                                  .take(_itemsPerPage)
+                                  .toList();
 
-                                return GestureDetector(
-                                  onLongPress: () {
-                                    if (!_isSelectionMode) {
-                                      setState(() {
-                                        _isSelectionMode = true;
-                                        _selectedCategoryIds.add(category.id);
-                                      });
-                                    }
-                                  },
-                                  onTap: _isSelectionMode
-                                      ? () {
-                                          toggleSelection(category.id);
+                              return SliverPadding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: horizontalPadding,
+                                ),
+                                sliver: SliverList(
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
+                                    final category = paginatedCategories[index];
+                                    final productCount = getProductCount(
+                                      category.id,
+                                    );
+                                    final isSelected = _selectedCategoryIds
+                                        .contains(category.id);
+
+                                    return GestureDetector(
+                                      onLongPress: () {
+                                        if (!_isSelectionMode) {
+                                          setState(() {
+                                            _isSelectionMode = true;
+                                            _selectedCategoryIds.add(
+                                              category.id,
+                                            );
+                                          });
                                         }
-                                      : null,
-                                  behavior: _isSelectionMode
-                                      ? HitTestBehavior.opaque
-                                      : HitTestBehavior.translucent,
-                                  child: Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: screenHeight * 0.015,
-                                    ),
-                                    child: Stack(
-                                      children: [
-                                        Opacity(
-                                          opacity: isSelected ? 0.5 : 1.0,
-                                          child: CategoryCard(
-                                            category: category,
-                                            productCount: productCount,
-                                            isDark: isDark,
-                                            screenWidth: screenWidth,
-                                            screenHeight: screenHeight,
-                                            onEdit: _isSelectionMode
-                                                ? null
-                                                : () =>
-                                                      showEditCategoryBottomSheet(
+                                      },
+                                      onTap: _isSelectionMode
+                                          ? () {
+                                              toggleSelection(category.id);
+                                            }
+                                          : null,
+                                      behavior: _isSelectionMode
+                                          ? HitTestBehavior.opaque
+                                          : HitTestBehavior.translucent,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(
+                                          bottom: screenHeight * 0.015,
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            Opacity(
+                                              opacity: isSelected ? 0.5 : 1.0,
+                                              child: CategoryCard(
+                                                category: category,
+                                                productCount: productCount,
+                                                isDark: isDark,
+                                                screenWidth: screenWidth,
+                                                screenHeight: screenHeight,
+                                                onEdit: _isSelectionMode
+                                                    ? null
+                                                    : () =>
+                                                          showEditCategoryBottomSheet(
+                                                            category,
+                                                          ),
+                                                onDelete: _isSelectionMode
+                                                    ? null
+                                                    : () => deleteCategory(
                                                         category,
                                                       ),
-                                            onDelete: _isSelectionMode
-                                                ? null
-                                                : () =>
-                                                      deleteCategory(category),
-                                          ),
-                                        ),
-                                        if (_isSelectionMode)
-                                          Positioned(
-                                            top: screenWidth * 0.02,
-                                            right: screenWidth * 0.02,
-                                            child: Container(
-                                              width: screenWidth * 0.08,
-                                              height: screenWidth * 0.08,
-                                              decoration: BoxDecoration(
-                                                color: isSelected
-                                                    ? Colors.blue
-                                                    : Colors.transparent,
-                                                border: Border.all(
-                                                  color: isSelected
-                                                      ? Colors.blue
-                                                      : Colors.grey,
-                                                  width: 2,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      screenWidth * 0.02,
-                                                    ),
                                               ),
-                                              child: isSelected
-                                                  ? Icon(
-                                                      Icons.check,
-                                                      color: Colors.white,
-                                                      size: screenWidth * 0.05,
-                                                    )
-                                                  : null,
                                             ),
-                                          ),
-                                      ],
+                                            if (_isSelectionMode)
+                                              Positioned(
+                                                top: screenWidth * 0.02,
+                                                right: screenWidth * 0.02,
+                                                child: Container(
+                                                  width: screenWidth * 0.08,
+                                                  height: screenWidth * 0.08,
+                                                  decoration: BoxDecoration(
+                                                    color: isSelected
+                                                        ? Colors.blue
+                                                        : Colors.transparent,
+                                                    border: Border.all(
+                                                      color: isSelected
+                                                          ? Colors.blue
+                                                          : Colors.grey,
+                                                      width: 2,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          screenWidth * 0.02,
+                                                        ),
+                                                  ),
+                                                  child: isSelected
+                                                      ? Icon(
+                                                          Icons.check,
+                                                          color: Colors.white,
+                                                          size:
+                                                              screenWidth *
+                                                              0.05,
+                                                        )
+                                                      : null,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }, childCount: paginatedCategories.length),
+                                ),
+                              );
+                            },
+                          ),
+                    if (x.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Builder(
+                          builder: (context) {
+                            final totalPages = (x.length / _itemsPerPage)
+                                .ceil();
+                            final isFirstPage = _currentPage == 0;
+                            final isLastPage = _currentPage >= totalPages - 1;
+
+                            return Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding,
+                                vertical: screenHeight * 0.02,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    onPressed: isFirstPage
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _currentPage--;
+                                            });
+                                          },
+                                    icon: Icon(Icons.arrow_back_ios),
+                                    color: isFirstPage
+                                        ? Colors.grey.withOpacity(0.3)
+                                        : isDark
+                                        ? Colors.green[300]
+                                        : Colors.blue,
+                                  ),
+                                  SizedBox(width: screenWidth * 0.05),
+                                  Text(
+                                    '${_currentPage + 1} of $totalPages',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.grey[900],
                                     ),
                                   ),
-                                );
-                              }, childCount: x.length),
-                            ),
-                          ),
+                                  SizedBox(width: screenWidth * 0.05),
+                                  IconButton(
+                                    onPressed: isLastPage
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _currentPage++;
+                                            });
+                                          },
+                                    icon: Icon(Icons.arrow_forward_ios),
+                                    color: isLastPage
+                                        ? Colors.grey.withOpacity(0.3)
+                                        : isDark
+                                        ? Colors.green[300]
+                                        : Colors.blue,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                   ],
                 ),
                 if (_showScrollButton && !_isSelectionMode)

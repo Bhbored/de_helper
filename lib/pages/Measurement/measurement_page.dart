@@ -28,6 +28,8 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
   bool _showScrollButton = false;
   bool _isAtBottom = false;
   Timer? _scrollHideTimer;
+  int _currentPage = 0;
+  static const int _itemsPerPage = 10;
 
   @override
   void initState() {
@@ -130,8 +132,25 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
           displayedMeasurements.value!.isEmpty) {
         notifier.refreshMeasurement();
       }
+      if (mounted) {
+        if (_searchController.text.isEmpty) {
+          ref.read(measurementProvider.notifier).refreshMeasurement();
+        }
+      }
+      if (mounted && displayedMeasurements.value != null) {
+        final totalPages = (displayedMeasurements.value!.length / _itemsPerPage)
+            .ceil();
+        if (_currentPage >= totalPages && totalPages > 0) {
+          setState(() {
+            _currentPage = totalPages - 1;
+          });
+        }
+      }
     });
     void filterMeasurements(String query) {
+      setState(() {
+        _currentPage = 0;
+      });
       if (query.isEmpty) {
         notifier.refreshMeasurement();
       } else {
@@ -507,189 +526,272 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                             screenHeight: screenHeight,
                           ),
                         )
-                      : SliverPadding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: horizontalPadding,
-                          ),
-                          sliver: SliverGrid(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: screenWidth * 0.03,
-                                  mainAxisSpacing: screenWidth * 0.03,
-                                  childAspectRatio: 1.5,
-                                ),
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final measurement =
-                                    displayedMeasurements.value![index];
-                                final isSelected = _selectedMeasurementIds
-                                    .contains(measurement.id);
-                                final isNullPreset = measurement.name == 'NULL';
-                                return GestureDetector(
-                                  onLongPress: () {
-                                    if (!_isSelectionMode && !isNullPreset) {
-                                      setState(() {
-                                        _isSelectionMode = true;
-                                        _selectedMeasurementIds.add(
-                                          measurement.id,
-                                        );
-                                      });
-                                    }
-                                  },
-                                  onTap: _isSelectionMode && !isNullPreset
-                                      ? () {
-                                          toggleSelection(measurement.id);
-                                        }
-                                      : null,
-                                  behavior: _isSelectionMode
-                                      ? HitTestBehavior.opaque
-                                      : HitTestBehavior.translucent,
-                                  child: Stack(
-                                    children: [
-                                      Opacity(
-                                        opacity: isSelected ? 0.5 : 1.0,
-                                        child: Card(
-                                          key: ValueKey(measurement.id),
-                                          color: isDark
-                                              ? Colors.grey[800]
-                                              : Colors.white,
-                                          elevation: 2,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              screenWidth * 0.03,
-                                            ),
-                                          ),
-                                          child: Stack(
-                                            children: [
-                                              Padding(
-                                                padding: EdgeInsets.all(
-                                                  screenWidth * 0.02,
-                                                ),
-                                                child: Center(
-                                                  child: Text(
-                                                    measurement.name,
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                      fontSize:
-                                                          screenWidth * 0.035,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: isDark
-                                                          ? Colors.white
-                                                          : Colors.grey[900],
-                                                    ),
-                                                    maxLines: 2,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ),
-                                              if (!_isSelectionMode &&
-                                                  !isNullPreset) ...[
-                                                Positioned(
-                                                  top: screenWidth * 0.01,
-                                                  right: screenWidth * 0.01,
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      showEditMeasurementBottomSheet(
-                                                        measurement,
-                                                      );
-                                                    },
-                                                    child: Padding(
-                                                      padding: EdgeInsets.all(
-                                                        screenWidth * 0.015,
-                                                      ),
-                                                      child: Icon(
-                                                        Icons.edit,
-                                                        size:
-                                                            screenWidth * 0.06,
-                                                        color: isDark
-                                                            ? Colors.green[300]
-                                                            : Colors.blue,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Positioned(
-                                                  bottom: screenWidth * 0.01,
-                                                  right: screenWidth * 0.01,
-                                                  child: GestureDetector(
-                                                    onTap: () {
-                                                      final measurementId =
-                                                          measurement.id;
-                                                      final currentMeasurement =
-                                                          displayedMeasurements
-                                                              .value!
-                                                              .firstWhere(
-                                                                (m) =>
-                                                                    m.id ==
-                                                                    measurementId,
-                                                                orElse: () =>
-                                                                    measurement,
-                                                              );
-                                                      deleteMeasurement(
-                                                        currentMeasurement,
-                                                      );
-                                                    },
-                                                    child: Padding(
-                                                      padding: EdgeInsets.all(
-                                                        screenWidth * 0.015,
-                                                      ),
-                                                      child: Icon(
-                                                        Icons.delete,
-                                                        size:
-                                                            screenWidth * 0.06,
-                                                        color: Colors.red,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      if (_isSelectionMode && !isNullPreset)
-                                        Positioned(
-                                          top: screenWidth * 0.02,
-                                          right: screenWidth * 0.02,
-                                          child: Container(
-                                            width: screenWidth * 0.08,
-                                            height: screenWidth * 0.08,
-                                            decoration: BoxDecoration(
-                                              color: isSelected
-                                                  ? Colors.blue
-                                                  : Colors.transparent,
-                                              border: Border.all(
-                                                color: isSelected
-                                                    ? Colors.blue
-                                                    : Colors.grey,
-                                                width: 2,
-                                              ),
+                      : Builder(
+                          builder: (context) {
+                            final allMeasurements =
+                                displayedMeasurements.value!;
+                            final paginatedMeasurements = allMeasurements
+                                .skip(_currentPage * _itemsPerPage)
+                                .take(_itemsPerPage)
+                                .toList();
+
+                            return SliverPadding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding,
+                              ),
+                              sliver: SliverGrid(
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      crossAxisSpacing: screenWidth * 0.03,
+                                      mainAxisSpacing: screenWidth * 0.03,
+                                      childAspectRatio: 1.5,
+                                    ),
+                                delegate: SliverChildBuilderDelegate((
+                                  context,
+                                  index,
+                                ) {
+                                  final measurement =
+                                      paginatedMeasurements[index];
+                                  final isSelected = _selectedMeasurementIds
+                                      .contains(measurement.id);
+                                  final isNullPreset =
+                                      measurement.name == 'NULL';
+                                  return GestureDetector(
+                                    onLongPress: () {
+                                      if (!_isSelectionMode && !isNullPreset) {
+                                        setState(() {
+                                          _isSelectionMode = true;
+                                          _selectedMeasurementIds.add(
+                                            measurement.id,
+                                          );
+                                        });
+                                      }
+                                    },
+                                    onTap: _isSelectionMode && !isNullPreset
+                                        ? () {
+                                            toggleSelection(measurement.id);
+                                          }
+                                        : null,
+                                    behavior: _isSelectionMode
+                                        ? HitTestBehavior.opaque
+                                        : HitTestBehavior.translucent,
+                                    child: Stack(
+                                      children: [
+                                        Opacity(
+                                          opacity: isSelected ? 0.5 : 1.0,
+                                          child: Card(
+                                            key: ValueKey(measurement.id),
+                                            color: isDark
+                                                ? Colors.grey[800]
+                                                : Colors.white,
+                                            elevation: 2,
+                                            shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(
-                                                    screenWidth * 0.02,
+                                                    screenWidth * 0.03,
                                                   ),
                                             ),
-                                            child: isSelected
-                                                ? Icon(
-                                                    Icons.check,
-                                                    color: Colors.white,
-                                                    size: screenWidth * 0.05,
-                                                  )
-                                                : null,
+                                            child: Stack(
+                                              children: [
+                                                Padding(
+                                                  padding: EdgeInsets.all(
+                                                    screenWidth * 0.02,
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      measurement.name,
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                        fontSize:
+                                                            screenWidth * 0.035,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color: isDark
+                                                            ? Colors.white
+                                                            : Colors.grey[900],
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                                if (!_isSelectionMode &&
+                                                    !isNullPreset) ...[
+                                                  Positioned(
+                                                    top: screenWidth * 0.01,
+                                                    right: screenWidth * 0.01,
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        showEditMeasurementBottomSheet(
+                                                          measurement,
+                                                        );
+                                                      },
+                                                      child: Padding(
+                                                        padding: EdgeInsets.all(
+                                                          screenWidth * 0.015,
+                                                        ),
+                                                        child: Icon(
+                                                          Icons.edit,
+                                                          size:
+                                                              screenWidth *
+                                                              0.06,
+                                                          color: isDark
+                                                              ? Colors
+                                                                    .green[300]
+                                                              : Colors.blue,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    bottom: screenWidth * 0.01,
+                                                    right: screenWidth * 0.01,
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        final measurementId =
+                                                            measurement.id;
+                                                        final currentMeasurement =
+                                                            displayedMeasurements
+                                                                .value!
+                                                                .firstWhere(
+                                                                  (m) =>
+                                                                      m.id ==
+                                                                      measurementId,
+                                                                  orElse: () =>
+                                                                      measurement,
+                                                                );
+                                                        deleteMeasurement(
+                                                          currentMeasurement,
+                                                        );
+                                                      },
+                                                      child: Padding(
+                                                        padding: EdgeInsets.all(
+                                                          screenWidth * 0.015,
+                                                        ),
+                                                        child: Icon(
+                                                          Icons.delete,
+                                                          size:
+                                                              screenWidth *
+                                                              0.06,
+                                                          color: Colors.red,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                    ],
-                                  ),
-                                );
-                              },
-                              childCount:
-                                  displayedMeasurements.value?.length ?? 0,
-                            ),
-                          ),
+                                        if (_isSelectionMode && !isNullPreset)
+                                          Positioned(
+                                            top: screenWidth * 0.02,
+                                            right: screenWidth * 0.02,
+                                            child: Container(
+                                              width: screenWidth * 0.08,
+                                              height: screenWidth * 0.08,
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? Colors.blue
+                                                    : Colors.transparent,
+                                                border: Border.all(
+                                                  color: isSelected
+                                                      ? Colors.blue
+                                                      : Colors.grey,
+                                                  width: 2,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      screenWidth * 0.02,
+                                                    ),
+                                              ),
+                                              child: isSelected
+                                                  ? Icon(
+                                                      Icons.check,
+                                                      color: Colors.white,
+                                                      size: screenWidth * 0.05,
+                                                    )
+                                                  : null,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                }, childCount: paginatedMeasurements.length),
+                              ),
+                            );
+                          },
                         ),
+                  if (displayedMeasurements.value != null &&
+                      displayedMeasurements.value!.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: Builder(
+                        builder: (context) {
+                          final allMeasurements = displayedMeasurements.value!;
+                          final totalPages =
+                              (allMeasurements.length / _itemsPerPage).ceil();
+                          final isFirstPage = _currentPage == 0;
+                          final isLastPage = _currentPage >= totalPages - 1;
+
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                              vertical: screenHeight * 0.02,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  onPressed: isFirstPage
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _currentPage--;
+                                          });
+                                        },
+                                  icon: Icon(Icons.arrow_back_ios),
+                                  color: isFirstPage
+                                      ? Colors.grey.withOpacity(0.3)
+                                      : isDark
+                                      ? Colors.green[300]
+                                      : Colors.blue,
+                                ),
+                                SizedBox(width: screenWidth * 0.05),
+                                Text(
+                                  '${_currentPage + 1} of $totalPages',
+                                  style: TextStyle(
+                                    fontSize: screenWidth * 0.04,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white
+                                        : Colors.grey[900],
+                                  ),
+                                ),
+                                SizedBox(width: screenWidth * 0.05),
+                                IconButton(
+                                  onPressed: isLastPage
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _currentPage++;
+                                          });
+                                        },
+                                  icon: Icon(Icons.arrow_forward_ios),
+                                  color: isLastPage
+                                      ? Colors.grey.withOpacity(0.3)
+                                      : isDark
+                                      ? Colors.green[300]
+                                      : Colors.blue,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                 ],
               ),
               if (_showScrollButton && !_isSelectionMode)

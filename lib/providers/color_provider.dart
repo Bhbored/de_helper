@@ -94,7 +94,6 @@ class ColorNotifier extends _$ColorNotifier {
   }
 
   Future<void> deleteSelection(List<ColorPreset> colors) async {
-    // Filter out NULL preset from deletion
     final colorsToDelete = colors.where((c) => c.name != 'NULL').toList();
     if (colorsToDelete.isEmpty) return;
 

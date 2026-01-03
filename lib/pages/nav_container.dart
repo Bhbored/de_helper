@@ -6,6 +6,7 @@ import 'package:de_helper/pages/Category/category_page.dart';
 import 'package:de_helper/pages/Color/color_page.dart';
 import 'package:de_helper/pages/Measurement/measurement_page.dart';
 import 'package:de_helper/pages/Subcategory/subcategory_page.dart';
+import 'package:de_helper/pages/Product/all_products_page.dart';
 import 'package:de_helper/providers/color_provider.dart';
 import 'package:de_helper/providers/measurement_provider.dart';
 import 'package:de_helper/widgets/main_drawer.dart';
@@ -27,6 +28,7 @@ class _NavContainerState extends ConsumerState<NavContainer> {
     const SubcategoryPage(),
     const MeasurementPage(),
     const ColorPage(),
+    const AllProductsPage(),
   ];
 
   void setScreen(int index) {
@@ -52,18 +54,14 @@ class _NavContainerState extends ConsumerState<NavContainer> {
       if (nullColor == null) {
         await ref
             .read(colorProvider.notifier)
-            .addProduct(
-              ColorPreset(id: '1', name: 'NULL', hexCode: '808080'),
-            );
+            .addProduct(ColorPreset(id: '1', name: 'NULL', hexCode: '808080'));
       }
 
       final nullMeasurement = await measurementRepo.getByName('NULL');
       if (nullMeasurement == null) {
         await ref
             .read(measurementProvider.notifier)
-            .addMeasurement(
-              MeasurementPreset(id: '1', name: 'NULL'),
-            );
+            .addMeasurement(MeasurementPreset(id: '1', name: 'NULL'));
       }
     } catch (e) {
       // Silently fail
@@ -77,12 +75,8 @@ class _NavContainerState extends ConsumerState<NavContainer> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      drawer: MainDrawer(
-        selectScreen: setScreen,
-      ),
-      body: SafeArea(
-        child: _pages[_currentIndex],
-      ),
+      drawer: MainDrawer(selectScreen: setScreen),
+      body: SafeArea(child: _pages[_currentIndex]),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: isDark ? Colors.grey[850] : Colors.white,
@@ -122,9 +116,10 @@ class _NavContainerState extends ConsumerState<NavContainer> {
               icon: Icon(Icons.layers),
               label: 'Measurements',
             ),
+            BottomNavigationBarItem(icon: Icon(Icons.palette), label: 'Colors'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.palette),
-              label: 'Colors',
+              icon: Icon(Icons.production_quantity_limits_sharp),
+              label: 'Products',
             ),
           ],
         ),
