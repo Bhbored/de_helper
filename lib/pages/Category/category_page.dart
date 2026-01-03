@@ -113,6 +113,14 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       }
     });
     final categories = ref.watch(categoryProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          _searchController.text.isEmpty &&
+          categories.value != null &&
+          categories.value!.isEmpty) {
+        ref.read(categoryProvider.notifier).refreshCategories();
+      }
+    });
     final products = ref.watch(prodcutProvider);
     final subcategories = ref.watch(subcategoryProvider);
     void sortCategories() {
@@ -442,15 +450,16 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                           decoration: BoxDecoration(gradient: gradient),
                           padding: EdgeInsets.fromLTRB(
                             horizontalPadding,
-                            screenHeight * 0.08,
+                            screenHeight * 0.05,
                             horizontalPadding,
                             verticalPadding * 1.5,
                           ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 'OVERALL STATISTICS',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: screenWidth * 0.035,
                                   fontWeight: FontWeight.w600,
@@ -685,100 +694,96 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                               horizontal: horizontalPadding,
                             ),
                             sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final category = x[index];
-                                  final productCount = getProductCount(
-                                    category.id,
-                                  );
-                                  final isSelected = _selectedCategoryIds
-                                      .contains(
-                                        category.id,
-                                      );
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                final category = x[index];
+                                final productCount = getProductCount(
+                                  category.id,
+                                );
+                                final isSelected = _selectedCategoryIds
+                                    .contains(category.id);
 
-                                  return GestureDetector(
-                                    onLongPress: () {
-                                      if (!_isSelectionMode) {
-                                        setState(() {
-                                          _isSelectionMode = true;
-                                          _selectedCategoryIds.add(category.id);
-                                        });
-                                      }
-                                    },
-                                    onTap: _isSelectionMode
-                                        ? () {
-                                            toggleSelection(category.id);
-                                          }
-                                        : null,
-                                    behavior: _isSelectionMode
-                                        ? HitTestBehavior.opaque
-                                        : HitTestBehavior.translucent,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(
-                                        bottom: screenHeight * 0.015,
-                                      ),
-                                      child: Stack(
-                                        children: [
-                                          Opacity(
-                                            opacity: isSelected ? 0.5 : 1.0,
-                                            child: CategoryCard(
-                                              category: category,
-                                              productCount: productCount,
-                                              isDark: isDark,
-                                              screenWidth: screenWidth,
-                                              screenHeight: screenHeight,
-                                              onEdit: _isSelectionMode
-                                                  ? null
-                                                  : () =>
-                                                        showEditCategoryBottomSheet(
-                                                          category,
-                                                        ),
-                                              onDelete: _isSelectionMode
-                                                  ? null
-                                                  : () => deleteCategory(
-                                                      category,
-                                                    ),
-                                            ),
+                                return GestureDetector(
+                                  onLongPress: () {
+                                    if (!_isSelectionMode) {
+                                      setState(() {
+                                        _isSelectionMode = true;
+                                        _selectedCategoryIds.add(category.id);
+                                      });
+                                    }
+                                  },
+                                  onTap: _isSelectionMode
+                                      ? () {
+                                          toggleSelection(category.id);
+                                        }
+                                      : null,
+                                  behavior: _isSelectionMode
+                                      ? HitTestBehavior.opaque
+                                      : HitTestBehavior.translucent,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: screenHeight * 0.015,
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        Opacity(
+                                          opacity: isSelected ? 0.5 : 1.0,
+                                          child: CategoryCard(
+                                            category: category,
+                                            productCount: productCount,
+                                            isDark: isDark,
+                                            screenWidth: screenWidth,
+                                            screenHeight: screenHeight,
+                                            onEdit: _isSelectionMode
+                                                ? null
+                                                : () =>
+                                                      showEditCategoryBottomSheet(
+                                                        category,
+                                                      ),
+                                            onDelete: _isSelectionMode
+                                                ? null
+                                                : () =>
+                                                      deleteCategory(category),
                                           ),
-                                          if (_isSelectionMode)
-                                            Positioned(
-                                              top: screenWidth * 0.02,
-                                              right: screenWidth * 0.02,
-                                              child: Container(
-                                                width: screenWidth * 0.08,
-                                                height: screenWidth * 0.08,
-                                                decoration: BoxDecoration(
+                                        ),
+                                        if (_isSelectionMode)
+                                          Positioned(
+                                            top: screenWidth * 0.02,
+                                            right: screenWidth * 0.02,
+                                            child: Container(
+                                              width: screenWidth * 0.08,
+                                              height: screenWidth * 0.08,
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? Colors.blue
+                                                    : Colors.transparent,
+                                                border: Border.all(
                                                   color: isSelected
                                                       ? Colors.blue
-                                                      : Colors.transparent,
-                                                  border: Border.all(
-                                                    color: isSelected
-                                                        ? Colors.blue
-                                                        : Colors.grey,
-                                                    width: 2,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        screenWidth * 0.02,
-                                                      ),
+                                                      : Colors.grey,
+                                                  width: 2,
                                                 ),
-                                                child: isSelected
-                                                    ? Icon(
-                                                        Icons.check,
-                                                        color: Colors.white,
-                                                        size:
-                                                            screenWidth * 0.05,
-                                                      )
-                                                    : null,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      screenWidth * 0.02,
+                                                    ),
                                               ),
+                                              child: isSelected
+                                                  ? Icon(
+                                                      Icons.check,
+                                                      color: Colors.white,
+                                                      size: screenWidth * 0.05,
+                                                    )
+                                                  : null,
                                             ),
-                                        ],
-                                      ),
+                                          ),
+                                      ],
                                     ),
-                                  );
-                                },
-                                childCount: x.length,
-                              ),
+                                  ),
+                                );
+                              }, childCount: x.length),
                             ),
                           ),
                   ],
@@ -820,10 +825,7 @@ class _SelectionHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final double height;
 
-  _SelectionHeaderDelegate({
-    required this.child,
-    required this.height,
-  });
+  _SelectionHeaderDelegate({required this.child, required this.height});
 
   @override
   double get minExtent => height;

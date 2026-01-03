@@ -114,6 +114,14 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
       }
     });
     final displayedSubcategories = ref.watch(subcategoryProvider);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          _searchController.text.isEmpty &&
+          displayedSubcategories.value != null &&
+          displayedSubcategories.value!.isEmpty) {
+        ref.read(subcategoryProvider.notifier).refreshCategories();
+      }
+    });
     final categories = ref.watch(categoryProvider);
     final products = ref.watch(prodcutProvider);
     final mediaQuery = MediaQuery.of(context);
@@ -364,15 +372,16 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                           decoration: BoxDecoration(gradient: gradient),
                           padding: EdgeInsets.fromLTRB(
                             horizontalPadding,
-                            screenHeight * 0.08,
+                            screenHeight * 0.05,
                             horizontalPadding,
                             verticalPadding * 1.5,
                           ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 'OVERALL STATISTICS',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: screenWidth * 0.035,
                                   fontWeight: FontWeight.w600,
@@ -570,14 +579,10 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                                             .where(
                                               (subcategory) =>
                                                   _selectedSubcategoryIds
-                                                      .contains(
-                                                        subcategory.id,
-                                                      ),
+                                                      .contains(subcategory.id),
                                             )
                                             .toList();
-                                    handleDeleteSelected(
-                                      selectedSubcategories,
-                                    );
+                                    handleDeleteSelected(selectedSubcategories);
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
@@ -750,10 +755,7 @@ class _SelectionHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final double height;
 
-  _SelectionHeaderDelegate({
-    required this.child,
-    required this.height,
-  });
+  _SelectionHeaderDelegate({required this.child, required this.height});
 
   @override
   double get minExtent => height;

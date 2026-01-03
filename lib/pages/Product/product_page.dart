@@ -320,9 +320,8 @@ class _ProductPageState extends ConsumerState<ProductPage> {
           showDialog(
             context: context,
             barrierDismissible: false,
-            builder: (context) => const Center(
-              child: CircularProgressIndicator(),
-            ),
+            builder: (context) =>
+                const Center(child: CircularProgressIndicator()),
           );
 
           try {
@@ -715,306 +714,299 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                       : SliverPadding(
                           padding: EdgeInsets.only(bottom: screenHeight * 0.08),
                           sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                if (index == 0) {
-                                  return Column(
-                                    children: [
-                                      Container(
-                                        height: screenHeight * 0.06,
-                                        color: isDark
-                                            ? Colors.grey[850]
-                                            : Colors.grey[100],
-                                        child: Row(
-                                          children: [
-                                            SizedBox(width: screenWidth * 0.06),
-                                            SizedBox(
-                                              width: screenWidth * 0.20,
-                                              child: Text(
-                                                'Name',
-                                                style: TextStyle(
-                                                  fontSize: screenWidth * 0.035,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isDark
-                                                      ? Colors.grey[300]
-                                                      : Colors.grey[700],
-                                                ),
-                                              ),
-                                            ),
-                                            SizedBox(width: screenWidth * 0.06),
-                                            Container(
-                                              width: screenWidth * 0.18,
-                                              alignment: Alignment.center,
-                                              child: Text(
-                                                'Price',
-                                                style: TextStyle(
-                                                  fontSize: screenWidth * 0.035,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isDark
-                                                      ? Colors.grey[300]
-                                                      : Colors.grey[700],
-                                                ),
-                                              ),
-                                            ),
-                                            SizedBox(width: screenWidth * 0.12),
-                                            Expanded(
-                                              child: Text(
-                                                'Barcode',
-                                                style: TextStyle(
-                                                  fontSize: screenWidth * 0.035,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isDark
-                                                      ? Colors.grey[300]
-                                                      : Colors.grey[700],
-                                                ),
-                                                textAlign: TextAlign.start,
-                                              ),
-                                            ),
-                                            SizedBox(width: screenWidth * 0.06),
-                                          ],
-                                        ),
-                                      ),
-                                      Divider(
-                                        height: 0,
-                                        thickness: 1,
-                                        color: isDark
-                                            ? Colors.grey[700]
-                                            : Colors.grey[300],
-                                      ),
-                                    ],
-                                  );
-                                }
-
-                                final product =
-                                    displayedProducts.value![index - 1];
-                                final isSelected = _selectedProductIds.contains(
-                                  product.id,
-                                );
-
-                                return GestureDetector(
-                                  onLongPress: () {
-                                    if (!_isSelectionMode) {
-                                      setState(() {
-                                        _isSelectionMode = true;
-                                        _selectedProductIds.add(product.id);
-                                      });
-                                    }
-                                  },
-                                  onTap: _isSelectionMode
-                                      ? () {
-                                          toggleSelection(product.id);
-                                        }
-                                      : null,
-                                  behavior: _isSelectionMode
-                                      ? HitTestBehavior.opaque
-                                      : HitTestBehavior.translucent,
-                                  child: Dismissible(
-                                    key: ValueKey(product.id),
-                                    direction: _isSelectionMode
-                                        ? DismissDirection.none
-                                        : DismissDirection.horizontal,
-                                    background: Container(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              if (index == 0) {
+                                return Column(
+                                  children: [
+                                    Container(
+                                      height: screenHeight * 0.06,
                                       color: isDark
-                                          ? Colors.green[700]
-                                          : Colors.blue,
-                                      alignment: Alignment.centerLeft,
-                                      padding: EdgeInsets.only(
-                                        left: screenWidth * 0.05,
-                                      ),
-                                      child: Icon(
-                                        Icons.edit,
-                                        color: Colors.white,
-                                        size: screenWidth * 0.06,
-                                      ),
-                                    ),
-                                    secondaryBackground: Container(
-                                      color: Colors.red,
-                                      alignment: Alignment.centerRight,
-                                      padding: EdgeInsets.only(
-                                        right: screenWidth * 0.05,
-                                      ),
-                                      child: Icon(
-                                        Icons.delete,
-                                        color: Colors.white,
-                                        size: screenWidth * 0.06,
-                                      ),
-                                    ),
-                                    confirmDismiss: (direction) async {
-                                      if (direction ==
-                                          DismissDirection.startToEnd) {
-                                        showEditProductBottomSheet(product);
-                                        return false;
-                                      } else if (direction ==
-                                          DismissDirection.endToStart) {
-                                        return await showDeleteConfirmation(
-                                          product,
-                                        );
-                                      }
-                                      return false;
-                                    },
-                                    onDismissed: (direction) {
-                                      if (direction ==
-                                          DismissDirection.endToStart) {}
-                                    },
-                                    child: Stack(
-                                      children: [
-                                        Opacity(
-                                          opacity: isSelected ? 0.5 : 1.0,
-                                          child: InkWell(
-                                            onTap: _isSelectionMode
-                                                ? null
-                                                : () {
-                                                    Navigator.of(context).push(
-                                                      MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            ProductDetailPage(
-                                                              product: product,
-                                                            ),
-                                                      ),
-                                                    );
-                                                  },
-                                            child: Column(
-                                              children: [
-                                                Container(
-                                                  height: screenHeight * 0.08,
-                                                  color: isDark
-                                                      ? Colors.grey[800]
-                                                      : Colors.white,
-                                                  child: Row(
-                                                    children: [
-                                                      SizedBox(
-                                                        width:
-                                                            screenWidth * 0.06,
-                                                      ),
-                                                      SizedBox(
-                                                        width:
-                                                            screenWidth * 0.20,
-                                                        child: Text(
-                                                          product.name,
-                                                          style: TextStyle(
-                                                            fontSize:
-                                                                screenWidth *
-                                                                0.035,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: isDark
-                                                                ? Colors.white
-                                                                : Colors
-                                                                      .grey[900],
-                                                          ),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        width:
-                                                            screenWidth * 0.06,
-                                                      ),
-                                                      Container(
-                                                        width:
-                                                            screenWidth * 0.18,
-                                                        alignment:
-                                                            Alignment.center,
-                                                        child: Text(
-                                                          '\$${product.price.toStringAsFixed(2)}',
-                                                          style: TextStyle(
-                                                            fontSize:
-                                                                screenWidth *
-                                                                0.035,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: isDark
-                                                                ? Colors
-                                                                      .green[300]
-                                                                : Colors
-                                                                      .green[700],
-                                                          ),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        width:
-                                                            screenWidth * 0.12,
-                                                      ),
-                                                      Expanded(
-                                                        child: Text(
-                                                          product.barcode,
-                                                          style: TextStyle(
-                                                            fontSize:
-                                                                screenWidth *
-                                                                0.032,
-                                                            color: isDark
-                                                                ? Colors
-                                                                      .grey[300]
-                                                                : Colors
-                                                                      .grey[700],
-                                                          ),
-                                                          textAlign:
-                                                              TextAlign.start,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        width:
-                                                            screenWidth * 0.06,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Divider(
-                                                  height: 0,
-                                                  thickness: 1,
-                                                  color: isDark
-                                                      ? Colors.grey[700]
-                                                      : Colors.grey[300],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        if (_isSelectionMode)
-                                          Positioned(
-                                            top: screenWidth * 0.02,
-                                            right: screenWidth * 0.02,
-                                            child: Container(
-                                              width: screenWidth * 0.08,
-                                              height: screenWidth * 0.08,
-                                              decoration: BoxDecoration(
-                                                color: isSelected
-                                                    ? Colors.blue
-                                                    : Colors.transparent,
-                                                border: Border.all(
-                                                  color: isSelected
-                                                      ? Colors.blue
-                                                      : Colors.grey,
-                                                  width: 2,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      screenWidth * 0.02,
-                                                    ),
+                                          ? Colors.grey[850]
+                                          : Colors.grey[100],
+                                      child: Row(
+                                        children: [
+                                          SizedBox(width: screenWidth * 0.06),
+                                          SizedBox(
+                                            width: screenWidth * 0.20,
+                                            child: Text(
+                                              'Name',
+                                              style: TextStyle(
+                                                fontSize: screenWidth * 0.035,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark
+                                                    ? Colors.grey[300]
+                                                    : Colors.grey[700],
                                               ),
-                                              child: isSelected
-                                                  ? Icon(
-                                                      Icons.check,
-                                                      color: Colors.white,
-                                                      size: screenWidth * 0.05,
-                                                    )
-                                                  : null,
                                             ),
                                           ),
-                                      ],
+                                          SizedBox(width: screenWidth * 0.06),
+                                          Container(
+                                            width: screenWidth * 0.18,
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              'Price',
+                                              style: TextStyle(
+                                                fontSize: screenWidth * 0.035,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark
+                                                    ? Colors.grey[300]
+                                                    : Colors.grey[700],
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: screenWidth * 0.12),
+                                          Expanded(
+                                            child: Text(
+                                              'Barcode',
+                                              style: TextStyle(
+                                                fontSize: screenWidth * 0.035,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark
+                                                    ? Colors.grey[300]
+                                                    : Colors.grey[700],
+                                              ),
+                                              textAlign: TextAlign.start,
+                                            ),
+                                          ),
+                                          SizedBox(width: screenWidth * 0.06),
+                                        ],
+                                      ),
+                                    ),
+                                    Divider(
+                                      height: 0,
+                                      thickness: 1,
+                                      color: isDark
+                                          ? Colors.grey[700]
+                                          : Colors.grey[300],
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              final product =
+                                  displayedProducts.value![index - 1];
+                              final isSelected = _selectedProductIds.contains(
+                                product.id,
+                              );
+
+                              return GestureDetector(
+                                onLongPress: () {
+                                  if (!_isSelectionMode) {
+                                    setState(() {
+                                      _isSelectionMode = true;
+                                      _selectedProductIds.add(product.id);
+                                    });
+                                  }
+                                },
+                                onTap: _isSelectionMode
+                                    ? () {
+                                        toggleSelection(product.id);
+                                      }
+                                    : null,
+                                behavior: _isSelectionMode
+                                    ? HitTestBehavior.opaque
+                                    : HitTestBehavior.translucent,
+                                child: Dismissible(
+                                  key: ValueKey(product.id),
+                                  direction: _isSelectionMode
+                                      ? DismissDirection.none
+                                      : DismissDirection.horizontal,
+                                  background: Container(
+                                    color: isDark
+                                        ? Colors.green[700]
+                                        : Colors.blue,
+                                    alignment: Alignment.centerLeft,
+                                    padding: EdgeInsets.only(
+                                      left: screenWidth * 0.05,
+                                    ),
+                                    child: Icon(
+                                      Icons.edit,
+                                      color: Colors.white,
+                                      size: screenWidth * 0.06,
                                     ),
                                   ),
-                                );
-                              },
-                              childCount: displayedProducts.value!.length + 1,
-                            ),
+                                  secondaryBackground: Container(
+                                    color: Colors.red,
+                                    alignment: Alignment.centerRight,
+                                    padding: EdgeInsets.only(
+                                      right: screenWidth * 0.05,
+                                    ),
+                                    child: Icon(
+                                      Icons.delete,
+                                      color: Colors.white,
+                                      size: screenWidth * 0.06,
+                                    ),
+                                  ),
+                                  confirmDismiss: (direction) async {
+                                    if (direction ==
+                                        DismissDirection.startToEnd) {
+                                      showEditProductBottomSheet(product);
+                                      return false;
+                                    } else if (direction ==
+                                        DismissDirection.endToStart) {
+                                      return await showDeleteConfirmation(
+                                        product,
+                                      );
+                                    }
+                                    return false;
+                                  },
+                                  onDismissed: (direction) {
+                                    if (direction ==
+                                        DismissDirection.endToStart) {}
+                                  },
+                                  child: Stack(
+                                    children: [
+                                      Opacity(
+                                        opacity: isSelected ? 0.5 : 1.0,
+                                        child: InkWell(
+                                          onTap: _isSelectionMode
+                                              ? null
+                                              : () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ProductDetailPage(
+                                                            product: product,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                          child: Column(
+                                            children: [
+                                              Container(
+                                                height: screenHeight * 0.08,
+                                                color: isDark
+                                                    ? Colors.grey[800]
+                                                    : Colors.white,
+                                                child: Row(
+                                                  children: [
+                                                    SizedBox(
+                                                      width: screenWidth * 0.06,
+                                                    ),
+                                                    SizedBox(
+                                                      width: screenWidth * 0.20,
+                                                      child: Text(
+                                                        product.name,
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              screenWidth *
+                                                              0.035,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: isDark
+                                                              ? Colors.white
+                                                              : Colors
+                                                                    .grey[900],
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: screenWidth * 0.06,
+                                                    ),
+                                                    Container(
+                                                      width: screenWidth * 0.18,
+                                                      alignment:
+                                                          Alignment.center,
+                                                      child: Text(
+                                                        '\$${product.price.toStringAsFixed(2)}',
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              screenWidth *
+                                                              0.035,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: isDark
+                                                              ? Colors
+                                                                    .green[300]
+                                                              : Colors
+                                                                    .green[700],
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: screenWidth * 0.12,
+                                                    ),
+                                                    Expanded(
+                                                      child: Text(
+                                                        product.barcode,
+                                                        style: TextStyle(
+                                                          fontSize:
+                                                              screenWidth *
+                                                              0.032,
+                                                          color: isDark
+                                                              ? Colors.grey[300]
+                                                              : Colors
+                                                                    .grey[700],
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.start,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: screenWidth * 0.06,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Divider(
+                                                height: 0,
+                                                thickness: 1,
+                                                color: isDark
+                                                    ? Colors.grey[700]
+                                                    : Colors.grey[300],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      if (_isSelectionMode)
+                                        Positioned(
+                                          top: screenWidth * 0.02,
+                                          right: screenWidth * 0.02,
+                                          child: Container(
+                                            width: screenWidth * 0.08,
+                                            height: screenWidth * 0.08,
+                                            decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? Colors.blue
+                                                  : Colors.transparent,
+                                              border: Border.all(
+                                                color: isSelected
+                                                    ? Colors.blue
+                                                    : Colors.grey,
+                                                width: 2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    screenWidth * 0.02,
+                                                  ),
+                                            ),
+                                            child: isSelected
+                                                ? Icon(
+                                                    Icons.check,
+                                                    color: Colors.white,
+                                                    size: screenWidth * 0.05,
+                                                  )
+                                                : null,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }, childCount: displayedProducts.value!.length + 1),
                           ),
                         ),
                 ],
@@ -1055,10 +1047,7 @@ class _SelectionHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final double height;
 
-  _SelectionHeaderDelegate({
-    required this.child,
-    required this.height,
-  });
+  _SelectionHeaderDelegate({required this.child, required this.height});
 
   @override
   double get minExtent => height;

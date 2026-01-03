@@ -91,9 +91,7 @@ class CategoryNotifier extends _$CategoryNotifier {
   void filterByName(String query) {
     final current = state.value ?? [];
     final newList = current
-        .where(
-          (cat) => cat.name.toLowerCase().contains(query.toLowerCase()),
-        )
+        .where((cat) => cat.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
     state = AsyncValue.data(newList);
   }

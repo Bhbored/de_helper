@@ -123,6 +123,14 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
         );
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          _searchController.text.isEmpty &&
+          displayedMeasurements.value != null &&
+          displayedMeasurements.value!.isEmpty) {
+        notifier.refreshMeasurement();
+      }
+    });
     void filterMeasurements(String query) {
       if (query.isEmpty) {
         notifier.refreshMeasurement();
@@ -516,9 +524,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                 final measurement =
                                     displayedMeasurements.value![index];
                                 final isSelected = _selectedMeasurementIds
-                                    .contains(
-                                      measurement.id,
-                                    );
+                                    .contains(measurement.id);
                                 final isNullPreset = measurement.name == 'NULL';
                                 return GestureDetector(
                                   onLongPress: () {
@@ -722,10 +728,7 @@ class _SelectionHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final double height;
 
-  _SelectionHeaderDelegate({
-    required this.child,
-    required this.height,
-  });
+  _SelectionHeaderDelegate({required this.child, required this.height});
 
   @override
   double get minExtent => height;
