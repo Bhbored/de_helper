@@ -37,7 +37,6 @@ class ColorNotifier extends _$ColorNotifier {
       orElse: () => throw StateError('Category $id isnt found '),
     );
 
-    // Prevent deletion of NULL preset
     if (categoryToBeDeleted.name == 'NULL') {
       throw StateError('Cannot delete NULL preset');
     }

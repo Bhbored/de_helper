@@ -27,41 +27,48 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(seconds: 2));
-        
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
-     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+      vsync: this,
+      duration: const Duration(seconds: 2),
     );
 
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+
     _controller.forward();
-    
-    // Start gradient animation loop
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-       _animateGradient();
+      _animateGradient();
     });
 
     Timer(widget.duration, () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => widget.child,
-             transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                widget.child,
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
           ),
         );
       }
     });
   }
-  
+
   void _animateGradient() {
-      if(!mounted) return;
-      setState(() {
-          _alignment = _alignment == Alignment.topLeft ? Alignment.bottomRight : Alignment.topLeft;
-      });
+    if (!mounted) return;
+    setState(() {
+      _alignment = _alignment == Alignment.topLeft
+          ? Alignment.bottomRight
+          : Alignment.topLeft;
+    });
   }
 
   @override
@@ -80,11 +87,13 @@ class _SplashScreenState extends State<SplashScreen>
         onEnd: _animateGradient,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              begin: _alignment,
-              end: _alignment == Alignment.topLeft ? Alignment.bottomRight : Alignment.topLeft,
-              colors: isDark 
-                  ? AppGradients.darkBackground.colors 
-                  : AppGradients.lightBackground.colors,
+            begin: _alignment,
+            end: _alignment == Alignment.topLeft
+                ? Alignment.bottomRight
+                : Alignment.topLeft,
+            colors: isDark
+                ? AppGradients.darkBackground.colors
+                : AppGradients.lightBackground.colors,
           ),
         ),
         child: Center(
@@ -94,14 +103,14 @@ class _SplashScreenState extends State<SplashScreen>
               scale: _scaleAnimation,
               child: Container(
                 decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                        BoxShadow(
-                            color: isDark ? Colors.black26 : Colors.black12,
-                            blurRadius: 20,
-                            spreadRadius: 5
-                        )
-                    ]
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark ? Colors.black26 : Colors.black12,
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
                 ),
                 child: ClipOval(
                   child: Image.asset(
@@ -113,7 +122,9 @@ class _SplashScreenState extends State<SplashScreen>
                       return Icon(
                         Icons.shopping_bag_outlined,
                         size: 100,
-                        color: isDark ? AppColors.primaryDark : AppColors.primaryLight,
+                        color: isDark
+                            ? AppColors.primaryDark
+                            : AppColors.primaryLight,
                       );
                     },
                   ),

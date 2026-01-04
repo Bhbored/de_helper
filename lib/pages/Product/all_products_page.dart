@@ -1,6 +1,11 @@
 import 'dart:async';
-import 'package:de_helper/data/repos/product_repository_impl.dart';
 import 'package:de_helper/providers/product_provider.dart';
+import 'package:de_helper/providers/category_provider.dart';
+import 'package:de_helper/providers/subcategory_provider.dart';
+import 'package:de_helper/providers/color_provider.dart';
+import 'package:de_helper/providers/measurement_provider.dart';
+import 'package:de_helper/providers/helpers_providers.dart';
+import 'package:de_helper/utility/excel_export.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
 import 'package:de_helper/pages/Product/widgets/all_products_header.dart';
@@ -10,7 +15,6 @@ import 'package:de_helper/pages/Product/widgets/product_form_bottom_sheet.dart';
 import 'package:de_helper/utility/barcode_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:de_helper/models/product.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 
 class AllProductsPage extends ConsumerStatefulWidget {
   const AllProductsPage({super.key});
@@ -275,6 +279,58 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
     }
   }
 
+  Future<void> exportAllProducts() async {
+    try {
+      final categories = ref.read(categoryProvider);
+      final subcategories = ref.read(subcategoryProvider);
+      final colors = ref.read(colorProvider);
+      final measurements = ref.read(measurementProvider);
+
+      if (categories.value == null ||
+          subcategories.value == null ||
+          colors.value == null ||
+          measurements.value == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to export: Data not loaded')),
+          );
+        }
+        return;
+      }
+
+      final filePath = await ExcelExport.exportAllProducts(
+        allCategories: categories.value!,
+        allSubCategories: subcategories.value!,
+        allColors: colors.value!,
+        allMeasurements: measurements.value!,
+        getProductsByCategory: (String catId) async {
+          return await ref.read(productsByCatProvider(catId).future);
+        },
+      );
+
+      if (filePath != null && mounted) {
+        await ExcelExport.shareFile(filePath);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Export successfully')));
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to export products')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(prodcutProvider, (previous, next) {
@@ -398,6 +454,7 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
                           sortProducts();
                         });
                       },
+                      onExport: exportAllProducts,
                       horizontalPadding: horizontalPadding,
                       screenWidth: screenWidth,
                       screenHeight: screenHeight,

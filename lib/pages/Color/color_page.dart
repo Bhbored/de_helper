@@ -22,70 +22,21 @@ class ColorPage extends ConsumerStatefulWidget {
 
 class _ColorPageState extends ConsumerState<ColorPage> {
   final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
   ColorPreset? copied;
   bool _isSelectionMode = false;
   final Set<String> _selectedColorIds = {};
-  bool _showScrollButton = false;
-  bool _isAtBottom = false;
-  Timer? _scrollHideTimer;
   int _currentPage = 0;
   static const int _itemsPerPage = 10;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    _scrollHideTimer?.cancel();
     super.dispose();
-  }
-
-  void _onScroll() {
-    final position = _scrollController.position;
-    final isAtBottom = position.pixels >= position.maxScrollExtent - 50;
-    final isAtTop = position.pixels <= 50;
-
-    setState(() {
-      _isAtBottom = isAtBottom;
-      _showScrollButton = !isAtTop;
-    });
-
-    _scrollHideTimer?.cancel();
-    _scrollHideTimer = Timer(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        final currentPosition = _scrollController.position;
-        final currentIsAtBottom =
-            currentPosition.pixels >= currentPosition.maxScrollExtent - 50;
-        final currentIsAtTop = currentPosition.pixels <= 50;
-        setState(() {
-          _isAtBottom = currentIsAtBottom;
-          _showScrollButton = !currentIsAtTop;
-        });
-      }
-    });
-  }
-
-  void _scrollToPosition() {
-    if (_isAtBottom) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    }
   }
 
   @override
@@ -361,7 +312,6 @@ class _ColorPageState extends ConsumerState<ColorPage> {
           data: (data) => Stack(
             children: [
               CustomScrollView(
-                controller: _scrollController,
                 slivers: [
                   SliverAppBar(
                     expandedHeight: expandedHeight,
@@ -415,67 +365,73 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
                           decoration: BoxDecoration(
-                            gradient: isDark ? AppGradients.glassDark : AppGradients.glass,
+                            gradient: isDark
+                                ? AppGradients.glassDark
+                                : AppGradients.glass,
                           ),
-                        padding: EdgeInsets.all(horizontalPadding),
-                        child: Column(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.grey[800] : Colors.white,
-                                borderRadius: BorderRadius.circular(
-                                  screenWidth * 0.03,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                          padding: EdgeInsets.all(horizontalPadding),
+                          child: Column(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.grey[800]
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                    screenWidth * 0.03,
                                   ),
-                                ],
-                              ),
-                              child: ValueListenableBuilder<TextEditingValue>(
-                                valueListenable: _searchController,
-                                builder: (context, value, child) {
-                                  return TextField(
-                                    controller: _searchController,
-                                    onChanged: filterColors,
-                                    decoration: InputDecoration(
-                                      hintText: 'Search colors...',
-                                      hintStyle: TextStyle(
-                                        color: Colors.grey[400],
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
                                       ),
-                                      prefixIcon: Icon(
-                                        Icons.search,
-                                        color: Colors.grey[400],
-                                      ),
-                                      suffixIcon: value.text.isNotEmpty
-                                          ? IconButton(
-                                              icon: Icon(
-                                                Icons.close,
-                                                color: Colors.grey[400],
-                                              ),
-                                              onPressed: clearSearch,
-                                            )
-                                          : null,
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: horizontalPadding,
-                                        vertical: screenHeight * 0.02,
-                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
                                     ),
-                                  );
-                                },
+                                  ],
+                                ),
+                                child: ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: _searchController,
+                                  builder: (context, value, child) {
+                                    return TextField(
+                                      controller: _searchController,
+                                      onChanged: filterColors,
+                                      decoration: InputDecoration(
+                                        hintText: 'Search colors...',
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey[400],
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.search,
+                                          color: Colors.grey[400],
+                                        ),
+                                        suffixIcon: value.text.isNotEmpty
+                                            ? IconButton(
+                                                icon: Icon(
+                                                  Icons.close,
+                                                  color: Colors.grey[400],
+                                                ),
+                                                onPressed: clearSearch,
+                                              )
+                                            : null,
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: horizontalPadding,
+                                          vertical: screenHeight * 0.02,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                            SizedBox(height: verticalPadding),
-                          ],
+                              SizedBox(height: verticalPadding),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  ),
-                  if(_isSelectionMode && _selectedColorIds.isNotEmpty)
+                  if (_isSelectionMode && _selectedColorIds.isNotEmpty)
                     SliverPersistentHeader(
                       pinned: true,
                       delegate: _SelectionHeaderDelegate(
@@ -661,8 +617,16 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                                                               ),
                                                           decoration: BoxDecoration(
                                                             color: isDark
-                                                                ? Colors.black.withValues(alpha: 0.5)
-                                                                : Colors.white.withValues(alpha: 0.9),
+                                                                ? Colors.black
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.5,
+                                                                      )
+                                                                : Colors.white
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.9,
+                                                                      ),
                                                             borderRadius:
                                                                 BorderRadius.circular(
                                                                   screenWidth *
@@ -712,16 +676,14 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                                                                     ),
                                                                 decoration: BoxDecoration(
                                                                   color: isDark
-                                                                      ? Colors
-                                                                            .black
-                                                                            .withValues(
-                                                                              alpha: 0.5,
-                                                                            )
-                                                                      : Colors
-                                                                            .white
-                                                                            .withValues(
-                                                                              alpha: 0.9,
-                                                                            ),
+                                                                      ? Colors.black.withValues(
+                                                                          alpha:
+                                                                              0.5,
+                                                                        )
+                                                                      : Colors.white.withValues(
+                                                                          alpha:
+                                                                              0.9,
+                                                                        ),
                                                                   shape: BoxShape
                                                                       .circle,
                                                                 ),
@@ -769,16 +731,14 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                                                                     ),
                                                                 decoration: BoxDecoration(
                                                                   color: isDark
-                                                                      ? Colors
-                                                                            .black
-                                                                            .withValues(
-                                                                              alpha: 0.5,
-                                                                            )
-                                                                      : Colors
-                                                                            .white
-                                                                            .withValues(
-                                                                              alpha: 0.9,
-                                                                            ),
+                                                                      ? Colors.black.withValues(
+                                                                          alpha:
+                                                                              0.5,
+                                                                        )
+                                                                      : Colors.white.withValues(
+                                                                          alpha:
+                                                                              0.9,
+                                                                        ),
                                                                   shape: BoxShape
                                                                       .circle,
                                                                 ),
@@ -909,21 +869,6 @@ class _ColorPageState extends ConsumerState<ColorPage> {
                     ),
                 ],
               ),
-              if (_showScrollButton && !_isSelectionMode)
-                Positioned(
-                  left: screenWidth * 0.05,
-                  bottom: screenHeight * 0.02,
-                  child: FloatingActionButton(
-                    heroTag: 'color_scroll_button',
-                    mini: true,
-                    onPressed: _scrollToPosition,
-                    backgroundColor: isDark ? Colors.green[700] : Colors.blue,
-                    child: Icon(
-                      _isAtBottom ? Icons.arrow_upward : Icons.arrow_downward,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
             ],
           ),
           error: (e, s) => Center(

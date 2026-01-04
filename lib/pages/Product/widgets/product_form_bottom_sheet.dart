@@ -115,13 +115,10 @@ class _ProductFormBottomSheetState
     try {
       final result = await Navigator.of(context, rootNavigator: false)
           .push<String>(
-            MaterialPageRoute(
-              builder: (context) => const BarcodeScannerPage(),
-            ),
+            MaterialPageRoute(builder: (context) => const BarcodeScannerPage()),
           );
 
       if (result != null && mounted) {
-        // Set text directly - the _hasScanned flag in scanner prevents multiple pops
         controller.text = result;
       }
     } catch (e) {
@@ -149,7 +146,6 @@ class _ProductFormBottomSheetState
     final colors = ref.watch(colorProvider);
     final measurements = ref.watch(measurementProvider);
 
-    // Get NULL color and measurement IDs for initial values
     String? nullColorId;
     if (colors.value != null && colors.value!.isNotEmpty) {
       try {
@@ -183,9 +179,7 @@ class _ProductFormBottomSheetState
     return SafeArea(
       child: Container(
         width: double.infinity,
-        constraints: BoxConstraints(
-          maxHeight: screenHeight,
-        ),
+        constraints: BoxConstraints(maxHeight: screenHeight),
         padding: EdgeInsets.symmetric(
           horizontal: horizontalPadding,
           vertical: verticalPadding,

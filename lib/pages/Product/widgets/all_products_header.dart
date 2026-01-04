@@ -13,6 +13,7 @@ class AllProductsHeader extends StatelessWidget {
   final bool priceSortAscending;
   final VoidCallback onSortByName;
   final VoidCallback onSortByPrice;
+  final VoidCallback onExport;
   final double horizontalPadding;
   final double screenWidth;
   final double screenHeight;
@@ -29,6 +30,7 @@ class AllProductsHeader extends StatelessWidget {
     required this.priceSortAscending,
     required this.onSortByName,
     required this.onSortByPrice,
+    required this.onExport,
     required this.horizontalPadding,
     required this.screenWidth,
     required this.screenHeight,
@@ -180,28 +182,55 @@ class AllProductsHeader extends StatelessWidget {
                 ),
                 SizedBox(height: screenHeight * 0.02),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  spacing: 10,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    SortButton(
-                      label: 'Sort: Name',
-                      isActive: sortType == 'Name',
-                      onTap: onSortByName,
-                      isDark: isDark,
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.grey[800] : Colors.white,
+                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.file_download,
+                          color: isDark ? Colors.green[300] : Colors.blue[700],
+                        ),
+                        onPressed: onExport,
+                        tooltip: 'Export to Excel',
+                        padding: EdgeInsets.all(screenWidth * 0.03),
+                      ),
                     ),
-                    SortButton(
-                      label: sortType == 'Price'
-                          ? (priceSortAscending
-                                ? 'Sort: Price ↑'
-                                : 'Sort: Price ↓')
-                          : 'Sort: Price',
-                      isActive: sortType == 'Price',
-                      onTap: onSortByPrice,
-                      isDark: isDark,
-                      screenWidth: screenWidth,
-                      screenHeight: screenHeight,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 10,
+                      children: [
+                        SortButton(
+                          label: 'Sort: Name',
+                          isActive: sortType == 'Name',
+                          onTap: onSortByName,
+                          isDark: isDark,
+                          screenWidth: screenWidth,
+                          screenHeight: screenHeight,
+                        ),
+                        SortButton(
+                          label: sortType == 'Price'
+                              ? (priceSortAscending
+                                    ? 'Sort: Price ↑'
+                                    : 'Sort: Price ↓')
+                              : 'Sort: Price',
+                          isActive: sortType == 'Price',
+                          onTap: onSortByPrice,
+                          isDark: isDark,
+                          screenWidth: screenWidth,
+                          screenHeight: screenHeight,
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -36,7 +36,6 @@ class MeasurementNotifier extends _$MeasurementNotifier {
       orElse: () => throw StateError('Category $id isnt found '),
     );
 
-    // Prevent deletion of NULL preset
     if (categoryToBeDeleted.name == 'NULL') {
       throw StateError('Cannot delete NULL preset');
     }
@@ -80,9 +79,7 @@ class MeasurementNotifier extends _$MeasurementNotifier {
   void filterByName(String query) {
     final current = state.value ?? [];
     final newList = current
-        .where(
-          (cat) => (cat.name.toLowerCase()).contains(query.toLowerCase()),
-        )
+        .where((cat) => (cat.name.toLowerCase()).contains(query.toLowerCase()))
         .toList();
     state = AsyncValue.data(newList);
   }

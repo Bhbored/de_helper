@@ -527,7 +527,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     SortButton(
-                                      label: 'None',
+                                      label: 'Sort: Product Count',
                                       isActive: _sortType == 'Products',
                                       onTap: () {
                                         setState(() => _sortType = 'Products');

@@ -21,11 +21,7 @@ class AppGradients {
   static const LinearGradient lightBackground = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFE0F7FA), // Light Cyan
-      Color(0xFFF3E5F5), // Light Purple
-      Color(0xFFE8EAF6), // Light Indigo
-    ],
+    colors: [Color(0xFFE0F7FA), Color(0xFFF3E5F5), Color(0xFFE8EAF6)],
   );
 
   static const LinearGradient darkBackground = LinearGradient(

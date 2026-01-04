@@ -22,70 +22,21 @@ class MeasurementPage extends ConsumerStatefulWidget {
 
 class _MeasurementPageState extends ConsumerState<MeasurementPage> {
   final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
   MeasurementPreset? copied;
   bool _isSelectionMode = false;
   final Set<String> _selectedMeasurementIds = {};
-  bool _showScrollButton = false;
-  bool _isAtBottom = false;
-  Timer? _scrollHideTimer;
   int _currentPage = 0;
   static const int _itemsPerPage = 10;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    _scrollHideTimer?.cancel();
     super.dispose();
-  }
-
-  void _onScroll() {
-    final position = _scrollController.position;
-    final isAtBottom = position.pixels >= position.maxScrollExtent - 50;
-    final isAtTop = position.pixels <= 50;
-
-    setState(() {
-      _isAtBottom = isAtBottom;
-      _showScrollButton = !isAtTop;
-    });
-
-    _scrollHideTimer?.cancel();
-    _scrollHideTimer = Timer(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        final currentPosition = _scrollController.position;
-        final currentIsAtBottom =
-            currentPosition.pixels >= currentPosition.maxScrollExtent - 50;
-        final currentIsAtTop = currentPosition.pixels <= 50;
-        setState(() {
-          _isAtBottom = currentIsAtBottom;
-          _showScrollButton = !currentIsAtTop;
-        });
-      }
-    });
-  }
-
-  void _scrollToPosition() {
-    if (_isAtBottom) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    }
   }
 
   @override
@@ -333,7 +284,6 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
           data: (data) => Stack(
             children: [
               CustomScrollView(
-                controller: _scrollController,
                 slivers: [
                   SliverAppBar(
                     expandedHeight: expandedHeight,
@@ -800,21 +750,6 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                     ),
                 ],
               ),
-              if (_showScrollButton && !_isSelectionMode)
-                Positioned(
-                  left: screenWidth * 0.05,
-                  bottom: screenHeight * 0.02,
-                  child: FloatingActionButton(
-                    heroTag: 'measurement_scroll_button',
-                    mini: true,
-                    onPressed: _scrollToPosition,
-                    backgroundColor: isDark ? Colors.green[700] : Colors.blue,
-                    child: Icon(
-                      _isAtBottom ? Icons.arrow_upward : Icons.arrow_downward,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
             ],
           ),
           error: (e, s) => Center(

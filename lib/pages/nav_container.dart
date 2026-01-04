@@ -65,7 +65,9 @@ class _NavContainerState extends ConsumerState<NavContainer> {
             .read(measurementProvider.notifier)
             .addMeasurement(MeasurementPreset(id: '1', name: 'NULL'));
       }
-    } catch (e) {}
+    } catch (e) {
+      print(e.toString());
+    }
   }
 
   @override
@@ -74,15 +76,6 @@ class _NavContainerState extends ConsumerState<NavContainer> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomPadding = mediaQuery.padding.bottom;
     final viewInsets = mediaQuery.viewInsets.bottom;
-
-    // final navBarHeight = 70.0;
-    // final tabBarTotalHeight =
-    //     navBarHeight +
-    //     (viewInsets > 0
-    //         ? viewInsets
-    //         : bottomPadding > 0
-    //         ? bottomPadding
-    //         : 8);
 
     return Scaffold(
       extendBody: false,

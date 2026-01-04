@@ -69,10 +69,7 @@ class ExcelExport {
           CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
         );
         cell.value = headers[i];
-        cell.cellStyle = CellStyle(
-          bold: true,
-          fontSize: 12,
-        );
+        cell.cellStyle = CellStyle(bold: true, fontSize: 12);
       }
 
       for (int rowIndex = 0; rowIndex < products.length; rowIndex++) {
@@ -169,6 +166,244 @@ class ExcelExport {
           final directory = await getApplicationDocumentsDirectory();
           final fileName =
               '${category.name.replaceAll(RegExp(r'[^\w\s-]'), '_')}.xlsx';
+          final filePath = '${directory.path}/$fileName';
+          final file = File(filePath);
+          await file.writeAsBytes(fileBytes);
+          return filePath;
+        } catch (e2) {
+          return null;
+        }
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<String?> exportAllProducts({
+    required List<Category> allCategories,
+    required List<SubCategory> allSubCategories,
+    required List<ColorPreset> allColors,
+    required List<MeasurementPreset> allMeasurements,
+    required Future<List<Product>> Function(String) getProductsByCategory,
+  }) async {
+    try {
+      final excel = Excel.createExcel();
+      excel.delete('Sheet1');
+      final sheet = excel['Products'];
+
+      String? getSubCategoryName(String? subCategoryId) {
+        if (subCategoryId == null) return null;
+        try {
+          return allSubCategories.firstWhere((s) => s.id == subCategoryId).name;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      String getColorName(String colorPresetId) {
+        try {
+          return allColors
+              .firstWhere((c) => c.id == colorPresetId)
+              .displayLabel;
+        } catch (e) {
+          return 'Unknown';
+        }
+      }
+
+      String getMeasurementName(String measurementPresetId) {
+        try {
+          return allMeasurements
+              .firstWhere((m) => m.id == measurementPresetId)
+              .name;
+        } catch (e) {
+          return 'Unknown';
+        }
+      }
+
+      final sortedCategories = List<Category>.from(allCategories);
+      sortedCategories.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+
+      final headers = [
+        'CATEGORY',
+        'NAME',
+        'PRICE',
+        'COST',
+        'PROFIT MARGIN',
+        'QUANTITY',
+        'SUBCATEGORY',
+        'COLOR',
+        'MEASUREMENT',
+        'BARCODE',
+        'SECONDARY BARCODE',
+      ];
+
+      for (int i = 0; i < headers.length; i++) {
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
+        );
+        cell.value = headers[i];
+        cell.cellStyle = CellStyle(bold: true, fontSize: 12);
+      }
+
+      int currentRow = 1;
+      for (final category in sortedCategories) {
+        final products = await getProductsByCategory(category.id);
+
+        for (final product in products) {
+          final cost = product.manualCost ?? product.cost;
+
+          final profitMargin = product.profitMargin > 0
+              ? '${(product.profitMargin * 100).toStringAsFixed(2)}%'
+              : '';
+
+          final subCategoryName =
+              getSubCategoryName(product.subCategoryId) ?? '';
+
+          final secondaryBarcode = product.secondaryBarcode ?? '';
+
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 0,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              category.name;
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 1,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              product.name;
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 2,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              product.price;
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 3,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              cost;
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 4,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              profitMargin;
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 5,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              product.quantity;
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 6,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              subCategoryName;
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: 7,
+                  rowIndex: currentRow,
+                ),
+              )
+              .value = getColorName(
+            product.colorPresetId,
+          );
+          sheet
+              .cell(
+                CellIndex.indexByColumnRow(
+                  columnIndex: 8,
+                  rowIndex: currentRow,
+                ),
+              )
+              .value = getMeasurementName(
+            product.measurementPresetId,
+          );
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 9,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              product.barcode;
+          sheet
+                  .cell(
+                    CellIndex.indexByColumnRow(
+                      columnIndex: 10,
+                      rowIndex: currentRow,
+                    ),
+                  )
+                  .value =
+              secondaryBarcode;
+
+          currentRow++;
+        }
+      }
+
+      final fileBytes = excel.save();
+      if (fileBytes == null) {
+        return null;
+      }
+
+      Directory? documentsDir;
+      try {
+        if (Platform.isAndroid) {
+          final externalDirs = await getExternalStorageDirectories();
+          if (externalDirs != null && externalDirs.isNotEmpty) {
+            final externalPath = externalDirs.first.path;
+
+            final rootPath = externalPath.split('/Android')[0];
+            documentsDir = Directory('$rootPath/Documents');
+          } else {
+            documentsDir = await getApplicationDocumentsDirectory();
+          }
+        } else {
+          documentsDir = await getApplicationDocumentsDirectory();
+        }
+
+        if (!await documentsDir.exists()) {
+          await documentsDir.create(recursive: true);
+        }
+
+        final fileName = 'All_Products.xlsx';
+        final filePath = '${documentsDir.path}/$fileName';
+        final file = File(filePath);
+        await file.writeAsBytes(fileBytes);
+        return filePath;
+      } catch (e) {
+        try {
+          final directory = await getApplicationDocumentsDirectory();
+          final fileName =
+              'All_Products_${DateTime.now().toIso8601String()}.xlsx';
           final filePath = '${directory.path}/$fileName';
           final file = File(filePath);
           await file.writeAsBytes(fileBytes);
