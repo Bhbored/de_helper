@@ -105,14 +105,21 @@ class ProdcutNotifier extends _$ProdcutNotifier {
   Future<void> deleteSelection(List<Product> products) async {
     if (products.isEmpty) return;
 
+    final current = state.value ?? [];
     List<String> ids = [];
     for (var x in products) {
       ids.add(x.id);
     }
-    for (var y in ids) {
-      _repo.delete(y);
+    state = AsyncValue.data(current.where((x) => !ids.contains(x.id)).toList());
+    try {
+      for (var y in ids) {
+        _repo.delete(y);
+      }
+      refreshProduct();
+    } catch (e) {
+      state = AsyncValue.data(current);
+      rethrow;
     }
-    refreshProduct();
   }
 
   Future<void> updateSelection(

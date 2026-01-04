@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:de_helper/models/product.dart';
 import 'package:de_helper/providers/helpers_providers.dart';
 import 'package:de_helper/providers/measurement_provider.dart';
@@ -382,8 +383,12 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                         topLeft: Radius.circular(screenWidth * 0.06),
                         topRight: Radius.circular(screenWidth * 0.06),
                       ),
-                      child: Container(
-                        color: isDark ? Colors.grey[900] : Colors.white,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: isDark ? AppGradients.glassDark : AppGradients.glass,
+                          ),
                         padding: EdgeInsets.all(horizontalPadding),
                         child: Column(
                           children: [
@@ -395,7 +400,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -441,6 +446,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                       ),
                     ),
                   ),
+                  ),
                   if (_isSelectionMode && _selectedMeasurementIds.isNotEmpty)
                     SliverPersistentHeader(
                       pinned: true,
@@ -454,7 +460,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                             color: isDark ? Colors.grey[900] : Colors.white,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -754,7 +760,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                         },
                                   icon: Icon(Icons.arrow_back_ios),
                                   color: isFirstPage
-                                      ? Colors.grey.withOpacity(0.3)
+                                      ? Colors.grey.withValues(alpha: 0.3)
                                       : isDark
                                       ? Colors.green[300]
                                       : Colors.blue,
@@ -781,7 +787,7 @@ class _MeasurementPageState extends ConsumerState<MeasurementPage> {
                                         },
                                   icon: Icon(Icons.arrow_forward_ios),
                                   color: isLastPage
-                                      ? Colors.grey.withOpacity(0.3)
+                                      ? Colors.grey.withValues(alpha: 0.3)
                                       : isDark
                                       ? Colors.green[300]
                                       : Colors.blue,

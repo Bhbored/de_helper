@@ -62,7 +62,7 @@ class _ColorFormBottomSheetState extends State<ColorFormBottomSheet> {
   }
 
   String _colorToHex(Color color) {
-    return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+    return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
   }
 
   void _save() {

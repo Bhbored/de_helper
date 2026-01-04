@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/product_provider.dart';
 import 'package:de_helper/providers/subcategory_provider.dart';
@@ -38,6 +39,9 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    Future.delayed(const Duration(milliseconds: 100), () {
+      ref.read(categoryProvider.notifier).refreshCategories();
+    });
   }
 
   @override
@@ -122,11 +126,6 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
           categories.value!.isEmpty) {
         ref.read(categoryProvider.notifier).refreshCategories();
       }
-      if (mounted) {
-        if (_searchController.text.isEmpty) {
-          ref.read(categoryProvider.notifier).refreshCategories();
-        }
-      }
       if (mounted && categories.value != null) {
         final totalPages = (categories.value!.length / _itemsPerPage).ceil();
         if (_currentPage >= totalPages && totalPages > 0) {
@@ -140,7 +139,8 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
     final products = ref.watch(prodcutProvider);
     final subcategories = ref.watch(subcategoryProvider);
     void sortCategories() {
-      final sorted = categories.value!;
+      final sorted = categories.value;
+      if (sorted == null || sorted.isEmpty) return;
       switch (sortType) {
         case 'Products':
           sorted.sort((a, b) {
@@ -154,7 +154,9 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
           });
           break;
         case 'Alphabetical':
-          sorted.sort((a, b) => a.name.compareTo(b.name));
+          sorted.sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          );
           break;
       }
       ref.read(categoryProvider.notifier).sortCategories(sorted);
@@ -167,7 +169,11 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
       if (query.isEmpty) {
         ref.read(categoryProvider.notifier).refreshCategories();
       } else {
-        ref.read(categoryProvider.notifier).filterByName(query);
+        ref.read(categoryProvider.notifier).refreshCategories().then((_) {
+          if (mounted) {
+            ref.read(categoryProvider.notifier).filterByName(query);
+          }
+        });
       }
     }
 
@@ -528,99 +534,114 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                           topLeft: Radius.circular(screenWidth * 0.06),
                           topRight: Radius.circular(screenWidth * 0.06),
                         ),
-                        child: Container(
-                          color: isDark ? Colors.grey[900] : Colors.white,
-                          padding: EdgeInsets.all(horizontalPadding),
-                          child: Column(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.grey[800]
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(
-                                    screenWidth * 0.03,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.05,
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: isDark
+                                  ? AppGradients.glassDark
+                                  : AppGradients.glass,
+                            ),
+                            padding: EdgeInsets.all(horizontalPadding),
+                            child: Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.grey[800]
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(
+                                      screenWidth * 0.03,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
                                       ),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
+                                    ],
+                                  ),
+                                  child:
+                                      ValueListenableBuilder<TextEditingValue>(
+                                        valueListenable: _searchController,
+                                        builder: (context, value, child) {
+                                          return TextField(
+                                            controller: _searchController,
+                                            onChanged: filterCategories,
+                                            decoration: InputDecoration(
+                                              hintText: 'Search Categories...',
+                                              hintStyle: TextStyle(
+                                                color: Colors.grey[400],
+                                              ),
+                                              prefixIcon: Icon(
+                                                Icons.search,
+                                                color: Colors.grey[400],
+                                              ),
+                                              suffixIcon: value.text.isNotEmpty
+                                                  ? IconButton(
+                                                      icon: Icon(
+                                                        Icons.close,
+                                                        color: Colors.grey[400],
+                                                      ),
+                                                      onPressed: clearSearch,
+                                                    )
+                                                  : null,
+                                              border: InputBorder.none,
+                                              contentPadding:
+                                                  EdgeInsets.symmetric(
+                                                    horizontal:
+                                                        horizontalPadding,
+                                                    vertical:
+                                                        screenHeight * 0.02,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                ),
+                                SizedBox(height: screenHeight * 0.02),
+                                SizedBox(width: screenWidth * 0.02),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  spacing: 10,
+                                  children: [
+                                    SortButton(
+                                      label: 'Sort: Product Count',
+                                      isActive: sortType == 'Products',
+                                      onTap: () {
+                                        setState(() {
+                                          sortType = 'Products';
+                                          sortCategories();
+                                        });
+                                      },
+                                      isDark: isDark,
+                                      screenWidth: screenWidth,
+                                      screenHeight: screenHeight,
+                                    ),
+                                    SortButton(
+                                      label: 'Sort: Alphabetical',
+                                      isActive: sortType == 'Alphabetical',
+                                      onTap: () {
+                                        setState(() {
+                                          sortType = 'Alphabetical';
+                                        });
+                                        sortCategories();
+                                      },
+                                      isDark: isDark,
+                                      screenWidth: screenWidth,
+                                      screenHeight: screenHeight,
                                     ),
                                   ],
                                 ),
-                                child: ValueListenableBuilder<TextEditingValue>(
-                                  valueListenable: _searchController,
-                                  builder: (context, value, child) {
-                                    return TextField(
-                                      controller: _searchController,
-                                      onChanged: filterCategories,
-                                      decoration: InputDecoration(
-                                        hintText: 'Search Categories...',
-                                        hintStyle: TextStyle(
-                                          color: Colors.grey[400],
-                                        ),
-                                        prefixIcon: Icon(
-                                          Icons.search,
-                                          color: Colors.grey[400],
-                                        ),
-                                        suffixIcon: value.text.isNotEmpty
-                                            ? IconButton(
-                                                icon: Icon(
-                                                  Icons.close,
-                                                  color: Colors.grey[400],
-                                                ),
-                                                onPressed: clearSearch,
-                                              )
-                                            : null,
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: horizontalPadding,
-                                          vertical: screenHeight * 0.02,
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                SizedBox(
+                                  height: viewInsets.bottom > 0
+                                      ? viewInsets.bottom
+                                      : 0,
                                 ),
-                              ),
-                              SizedBox(height: screenHeight * 0.02),
-                              SizedBox(width: screenWidth * 0.02),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                spacing: 10,
-                                children: [
-                                  SortButton(
-                                    label: 'None',
-                                    isActive: sortType == 'Products',
-                                    onTap: () {
-                                      setState(() => sortType = 'Products');
-                                      sortCategories();
-                                    },
-                                    isDark: isDark,
-                                    screenWidth: screenWidth,
-                                    screenHeight: screenHeight,
-                                  ),
-                                  SortButton(
-                                    label: 'Sort: Alphabetical',
-                                    isActive: sortType == 'Alphabetical',
-                                    onTap: () {
-                                      setState(() => sortType = 'Alphabetical');
-                                      sortCategories();
-                                    },
-                                    isDark: isDark,
-                                    screenWidth: screenWidth,
-                                    screenHeight: screenHeight,
-                                  ),
-                                ],
-                              ),
-                              SizedBox(
-                                height: viewInsets.bottom > 0
-                                    ? viewInsets.bottom
-                                    : 0,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -846,7 +867,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                                           },
                                     icon: Icon(Icons.arrow_back_ios),
                                     color: isFirstPage
-                                        ? Colors.grey.withOpacity(0.3)
+                                        ? Colors.grey.withValues(alpha: 0.3)
                                         : isDark
                                         ? Colors.green[300]
                                         : Colors.blue,
@@ -873,7 +894,7 @@ class _CategoryPageState extends ConsumerState<CategoryPage> {
                                           },
                                     icon: Icon(Icons.arrow_forward_ios),
                                     color: isLastPage
-                                        ? Colors.grey.withOpacity(0.3)
+                                        ? Colors.grey.withValues(alpha: 0.3)
                                         : isDark
                                         ? Colors.green[300]
                                         : Colors.blue,

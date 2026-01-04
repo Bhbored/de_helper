@@ -1,16 +1,18 @@
+import 'dart:ui';
+import 'package:de_helper/utility/theme_selector.dart';
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/subcategory_provider.dart';
-import 'package:de_helper/providers/color_provider.dart';
-import 'package:de_helper/providers/measurement_provider.dart';
 import 'package:de_helper/providers/product_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
 import 'package:de_helper/pages/Product/product_detail_page.dart';
 import 'package:de_helper/pages/Product/widgets/product_empty_state.dart';
-import 'package:de_helper/utility/product_data_source.dart';
 import 'package:de_helper/utility/barcode_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:syncfusion_flutter_datagrid/datagrid.dart';
+import 'package:pluto_grid/pluto_grid.dart';
+import 'package:de_helper/models/product.dart';
+import 'package:de_helper/models/category.dart';
+import 'package:de_helper/models/subcategory.dart';
 
 class AllProductsPage extends ConsumerStatefulWidget {
   const AllProductsPage({super.key});
@@ -20,23 +22,35 @@ class AllProductsPage extends ConsumerStatefulWidget {
 }
 
 class _AllProductsPageState extends ConsumerState<AllProductsPage> {
-  final DataGridController _dataGridController = DataGridController();
   final TextEditingController _searchController = TextEditingController();
-  ProductDataSource? _productDataSource;
+  PlutoGridStateManager? _stateManager;
+  List<Product>? _allProducts;
 
   @override
   void dispose() {
     _searchController.dispose();
-    _dataGridController.dispose();
     super.dispose();
   }
 
   void filterProducts(String query) {
+    setState(() {
+      // Filtering is now handled in the build method
+    });
+  }
+
+  List<Product> _filterProducts(List<Product> allProducts, String query) {
     if (query.isEmpty) {
-      ref.read(prodcutProvider.notifier).refreshProduct();
-    } else {
-      ref.read(prodcutProvider.notifier).filterByNameOrBarcode(query);
+      return allProducts;
     }
+    final queryLower = query.toLowerCase();
+    return allProducts.where((product) {
+      final nameMatch = product.name.toLowerCase().contains(queryLower);
+      final barcodeMatch =
+          product.barcode.toLowerCase().contains(queryLower) ||
+          (product.secondaryBarcode != null &&
+              product.secondaryBarcode!.toLowerCase().contains(queryLower));
+      return nameMatch || barcodeMatch;
+    }).toList();
   }
 
   Future<void> scanBarcode() async {
@@ -47,13 +61,105 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
 
     if (barcode != null && barcode.isNotEmpty) {
       _searchController.text = barcode;
-      ref.read(prodcutProvider.notifier).filterByBarcode(barcode);
+      setState(() {
+        // Filtering is handled in build method
+      });
     }
   }
 
   void clearSearch() {
     _searchController.clear();
     filterProducts('');
+  }
+
+  List<PlutoColumn> _buildColumns(bool isDark, double screenWidth) {
+    return [
+      PlutoColumn(
+        title: 'Name',
+        field: 'name',
+        type: PlutoColumnType.text(),
+        width: 150,
+      ),
+      PlutoColumn(
+        title: 'Category',
+        field: 'category',
+        type: PlutoColumnType.text(),
+        width: 150,
+      ),
+      PlutoColumn(
+        title: 'Subcategory',
+        field: 'subcategory',
+        type: PlutoColumnType.text(),
+        width: 160,
+      ),
+      PlutoColumn(
+        title: 'Quantity',
+        field: 'quantity',
+        type: PlutoColumnType.number(),
+        width: 130,
+      ),
+      PlutoColumn(
+        title: 'Price',
+        field: 'price',
+        type: PlutoColumnType.text(),
+        width: 130,
+      ),
+      PlutoColumn(
+        title: 'Barcode',
+        field: 'barcode',
+        type: PlutoColumnType.text(),
+        width: 160,
+      ),
+      PlutoColumn(
+        title: 'Secondary Barcode',
+        field: 'secondaryBarcode',
+        type: PlutoColumnType.text(),
+        width: 160,
+      ),
+      PlutoColumn(
+        title: 'Actions',
+        field: 'actions',
+        type: PlutoColumnType.text(),
+        width: 100,
+        enableSorting: false,
+        enableFilterMenuItem: false,
+      ),
+    ];
+  }
+
+  List<PlutoRow> _buildRows(
+    List<Product> productList,
+    List<Category> categories,
+    List<SubCategory> subcategories,
+  ) {
+    return productList.map<PlutoRow>((product) {
+      final category = categories.firstWhere(
+        (c) => c.id == product.categoryId,
+        orElse: () => categories.first,
+      );
+      final subcategory = product.subCategoryId != null
+          ? subcategories.firstWhere(
+              (s) => s.id == product.subCategoryId,
+              orElse: () => subcategories.first,
+            )
+          : null;
+
+      return PlutoRow(
+        key: ValueKey(product.id),
+        cells: {
+          'name': PlutoCell(value: product.name),
+          'category': PlutoCell(value: category.name),
+          'subcategory': PlutoCell(value: subcategory?.name ?? 'N/A'),
+          'quantity': PlutoCell(value: product.quantity),
+          'price': PlutoCell(value: '\$${product.price.toStringAsFixed(2)}'),
+          'barcode': PlutoCell(value: product.barcode),
+          'secondaryBarcode': PlutoCell(
+            value: product.secondaryBarcode ?? 'N/A',
+          ),
+          'actions': PlutoCell(value: product),
+        },
+      );
+    }).toList();
   }
 
   @override
@@ -87,51 +193,32 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
       onAction: null,
       body: products.when(
         data: (productList) {
+          // Store the full list when search is empty (meaning we have the full list from provider)
+          if (_searchController.text.isEmpty) {
+            _allProducts = List.from(productList);
+          }
+          _allProducts ??= List.from(productList);
+
           final categories = ref.watch(categoryProvider);
           final subcategories = ref.watch(subcategoryProvider);
-          final colors = ref.watch(colorProvider);
-          final measurements = ref.watch(measurementProvider);
 
-          if (categories.value == null ||
-              subcategories.value == null ||
-              colors.value == null ||
-              measurements.value == null) {
+          if (categories.value == null || subcategories.value == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          try {
-            if (_productDataSource == null) {
-              _productDataSource = ProductDataSource(
-                products: productList,
-                categories: categories.value!,
-                subcategories: subcategories.value!,
-                colors: colors.value!,
-                measurements: measurements.value!,
-                onProductTap: (product) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProductDetailPage(product: product),
-                    ),
-                  );
-                },
-                isDark: isDark,
-                screenWidth: screenWidth,
-                screenHeight: screenHeight,
-              );
-            } else {
-              _productDataSource!.updateProducts(productList);
-            }
-          } catch (e) {
-            return Center(
-              child: Text(
-                'Error initializing data: $e',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            );
-          }
+          // Filter products locally based on search query
+          final filteredProducts = _filterProducts(
+            _allProducts ?? productList,
+            _searchController.text,
+          );
 
-          final totalProducts = productList.length;
+          final totalProducts = filteredProducts.length;
+          final columns = _buildColumns(isDark, screenWidth);
+          final rows = _buildRows(
+            filteredProducts,
+            categories.value!,
+            subcategories.value!,
+          );
 
           return Column(
             children: [
@@ -139,13 +226,19 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
                 padding: EdgeInsets.symmetric(
                   horizontal: horizontalPadding * 0.5,
                 ),
-                child: Card(
-                  color: isDark ? Colors.grey[800] : Colors.white,
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(screenWidth * 0.03),
-                  ),
-                  child: Padding(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: isDark ? AppGradients.glassDark : AppGradients.glass,
+                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                        border: Border.all(
+                          color: isDark ? Colors.white10 : Colors.white24,
+                        ),
+                      ),
+                      child: Padding(
                     padding: EdgeInsets.all(horizontalPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,136 +343,77 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
                   ),
                 ),
               ),
+              ),
+              ),
               SizedBox(height: screenHeight * 0.02),
               Expanded(
-                child: productList.isEmpty
+                child: filteredProducts.isEmpty
                     ? ProductEmptyState(
                         isDark: isDark,
                         screenWidth: screenWidth,
                         screenHeight: screenHeight,
                       )
-                    : Container(
-                        margin: EdgeInsets.symmetric(
-                          horizontal: screenHeight * 0.01,
-                          vertical: screenHeight * 0.01,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.grey[800] : Colors.white,
-                          borderRadius: BorderRadius.circular(
-                            screenWidth * 0.03,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                    : PlutoGrid(
+                        mode: PlutoGridMode.multiSelect,
+                        columns: columns,
+                        rows: rows,
+                        onLoaded: (PlutoGridOnLoadedEvent event) {
+                          _stateManager = event.stateManager;
+                          _stateManager!.setSelectingMode(
+                            PlutoGridSelectingMode.row,
+                          );
+                          // Clear any default cell activation
+                          _stateManager!.clearCurrentCell();
+                          // Also clear after frame to ensure it's cleared
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (_stateManager != null && mounted) {
+                              _stateManager!.clearCurrentCell();
+                            }
+                          });
+                        },
+                        onRowDoubleTap: (PlutoGridOnRowDoubleTapEvent event) {
+                          final product = event.row.cells['actions']!.value;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ProductDetailPage(product: product),
                             ),
-                          ],
+                          );
+                        },
+                        configuration: PlutoGridConfiguration(
+                          style: PlutoGridStyleConfig(
+                            gridBackgroundColor: isDark
+                                ? Colors.grey[900]!
+                                : Colors.white,
+                            borderColor: isDark
+                                ? Colors.grey[700]!
+                                : Colors.grey[300]!,
+                            activatedColor: isDark
+                                ? Colors.yellow[500]!.withValues(alpha: 0.8)
+                                : Colors.yellow[300]!,
+                            activatedBorderColor: Colors.transparent,
+                            inactivatedBorderColor: isDark
+                                ? Colors.grey[700]!
+                                : Colors.grey[300]!,
+                            checkedColor: isDark
+                                ? Colors.yellow[500]!.withValues(alpha: 0.8)
+                                : Colors.yellow[300]!,
+                            rowColor: isDark ? Colors.grey[900]! : Colors.white,
+                            oddRowColor: isDark
+                                ? Colors.grey[800]!
+                                : Colors.grey[50]!,
+                            columnTextStyle: TextStyle(
+                              color: isDark ? Colors.white : Colors.grey[900]!,
+                            ),
+                            cellTextStyle: TextStyle(
+                              color: isDark ? Colors.white : Colors.grey[900]!,
+                            ),
+                          ),
+                          columnSize: PlutoGridColumnSizeConfig(
+                            autoSizeMode: PlutoAutoSizeMode.none,
+                          ),
                         ),
-                        child: _productDataSource == null
-                            ? const Center(child: CircularProgressIndicator())
-                            : RepaintBoundary(
-                                child: SfDataGrid(
-                                  key: ValueKey(
-                                    'products_grid_${_productDataSource!.rows.length}',
-                                  ),
-                                  source: _productDataSource!,
-                                  controller: _dataGridController,
-                                  selectionMode: SelectionMode.multiple,
-                                  allowSorting: true,
-                                  allowFiltering: false,
-                                  allowTriStateSorting: true,
-                                  gridLinesVisibility: GridLinesVisibility.both,
-                                  headerGridLinesVisibility:
-                                      GridLinesVisibility.both,
-                                  columnWidthMode: ColumnWidthMode.none,
-                                  columns: [
-                                    GridColumn(
-                                      columnName: 'name',
-                                      width: 150,
-                                      allowFiltering: false,
-                                      label: _DataGridHeaderCell(
-                                        text: 'Name',
-                                        isDark: isDark,
-                                        screenWidth: screenWidth,
-                                      ),
-                                    ),
-                                    GridColumn(
-                                      columnName: 'category',
-                                      width: 150,
-                                      allowFiltering: false,
-                                      label: _DataGridHeaderCell(
-                                        text: 'Category',
-                                        isDark: isDark,
-                                        screenWidth: screenWidth,
-                                      ),
-                                    ),
-                                    GridColumn(
-                                      columnName: 'subcategory',
-                                      width: 160,
-                                      allowFiltering: false,
-                                      label: _DataGridHeaderCell(
-                                        text: 'Subcategory',
-                                        isDark: isDark,
-                                        screenWidth: screenWidth,
-                                      ),
-                                    ),
-                                    GridColumn(
-                                      columnName: 'quantity',
-                                      width: 130,
-                                      allowFiltering: false,
-                                      label: _DataGridHeaderCell(
-                                        text: 'Quantity',
-                                        isDark: isDark,
-                                        screenWidth: screenWidth,
-                                      ),
-                                    ),
-                                    GridColumn(
-                                      columnName: 'price',
-                                      width: 130,
-                                      allowFiltering: false,
-                                      label: _DataGridHeaderCell(
-                                        text: 'Price',
-                                        isDark: isDark,
-                                        screenWidth: screenWidth,
-                                      ),
-                                    ),
-                                    GridColumn(
-                                      columnName: 'barcode',
-                                      width: 160,
-                                      allowSorting: false,
-                                      allowFiltering: false,
-                                      label: _DataGridHeaderCell(
-                                        text: 'Barcode',
-                                        isDark: isDark,
-                                        screenWidth: screenWidth,
-                                      ),
-                                    ),
-                                    GridColumn(
-                                      columnName: 'secondaryBarcode',
-                                      width: 160,
-                                      allowSorting: false,
-                                      allowFiltering: false,
-                                      label: _DataGridHeaderCell(
-                                        text: 'Secondary Barcode',
-                                        isDark: isDark,
-                                        screenWidth: screenWidth,
-                                      ),
-                                    ),
-                                    GridColumn(
-                                      columnName: 'actions',
-                                      width: 100,
-                                      allowSorting: false,
-                                      allowFiltering: false,
-                                      label: _DataGridHeaderCell(
-                                        text: 'Actions',
-                                        isDark: isDark,
-                                        screenWidth: screenWidth,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
                       ),
               ),
             ],
@@ -392,35 +426,6 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _DataGridHeaderCell extends StatelessWidget {
-  final String text;
-  final bool isDark;
-  final double screenWidth;
-
-  const _DataGridHeaderCell({
-    required this.text,
-    required this.isDark,
-    required this.screenWidth,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: isDark ? Colors.white : Colors.grey[900],
-        ),
-        maxLines: 1,
       ),
     );
   }

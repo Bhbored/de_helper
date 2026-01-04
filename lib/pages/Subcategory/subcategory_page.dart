@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:de_helper/models/product.dart';
 import 'package:de_helper/providers/category_provider.dart';
 import 'package:de_helper/providers/helpers_providers.dart';
@@ -39,6 +40,9 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    Future.delayed(const Duration(milliseconds: 100), () {
+      ref.read(subcategoryProvider.notifier).refreshCategories();
+    });
   }
 
   @override
@@ -47,6 +51,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _scrollHideTimer?.cancel();
+
     super.dispose();
   }
 
@@ -54,7 +59,6 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
     final position = _scrollController.position;
     final isAtBottom = position.pixels >= position.maxScrollExtent - 50;
     final isAtTop = position.pixels <= 50;
-
     setState(() {
       _isAtBottom = isAtBottom;
       _showScrollButton = !isAtTop;
@@ -123,11 +127,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
           displayedSubcategories.value!.isEmpty) {
         ref.read(subcategoryProvider.notifier).refreshCategories();
       }
-      if (mounted) {
-        if (_searchController.text.isEmpty) {
-          ref.read(subcategoryProvider.notifier).refreshCategories();
-        }
-      }
+
       if (mounted && displayedSubcategories.value != null) {
         final totalPages =
             (displayedSubcategories.value!.length / _itemsPerPage).ceil();
@@ -180,9 +180,13 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
         _currentPage = 0;
       });
       if (query.isEmpty) {
-        ref.watch(subcategoryProvider.notifier).refreshCategories();
+        ref.read(subcategoryProvider.notifier).refreshCategories();
       } else {
-        ref.watch(subcategoryProvider.notifier).filterByName(query);
+        ref.read(subcategoryProvider.notifier).refreshCategories().then((_) {
+          if (mounted) {
+            ref.read(subcategoryProvider.notifier).filterByName(query);
+          }
+        });
       }
     }
 
@@ -450,99 +454,113 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                           topLeft: Radius.circular(screenWidth * 0.06),
                           topRight: Radius.circular(screenWidth * 0.06),
                         ),
-                        child: Container(
-                          color: isDark ? Colors.grey[900] : Colors.white,
-                          padding: EdgeInsets.all(horizontalPadding),
-                          child: Column(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.grey[800]
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(
-                                    screenWidth * 0.03,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: isDark
+                                  ? AppGradients.glassDark
+                                  : AppGradients.glass,
+                            ),
+                            padding: EdgeInsets.all(horizontalPadding),
+                            child: Column(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.grey[800]
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(
+                                      screenWidth * 0.03,
                                     ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child:
+                                      ValueListenableBuilder<TextEditingValue>(
+                                        valueListenable: _searchController,
+                                        builder: (context, value, child) {
+                                          return TextField(
+                                            controller: _searchController,
+                                            onChanged: filterSubcategories,
+                                            decoration: InputDecoration(
+                                              hintText:
+                                                  'Search Subcategories...',
+                                              hintStyle: TextStyle(
+                                                color: Colors.grey[400],
+                                              ),
+                                              prefixIcon: Icon(
+                                                Icons.search,
+                                                color: Colors.grey[400],
+                                              ),
+                                              suffixIcon: value.text.isNotEmpty
+                                                  ? IconButton(
+                                                      icon: Icon(
+                                                        Icons.close,
+                                                        color: Colors.grey[400],
+                                                      ),
+                                                      onPressed: clearSearch,
+                                                    )
+                                                  : null,
+                                              border: InputBorder.none,
+                                              contentPadding:
+                                                  EdgeInsets.symmetric(
+                                                    horizontal:
+                                                        horizontalPadding,
+                                                    vertical:
+                                                        screenHeight * 0.02,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                ),
+                                SizedBox(height: screenHeight * 0.02),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    SortButton(
+                                      label: 'None',
+                                      isActive: _sortType == 'Products',
+                                      onTap: () {
+                                        setState(() => _sortType = 'Products');
+                                        sortSubcategories();
+                                      },
+                                      isDark: isDark,
+                                      screenWidth: screenWidth,
+                                      screenHeight: screenHeight,
+                                    ),
+                                    SizedBox(width: screenWidth * 0.02),
+                                    SortButton(
+                                      label: 'Sort: Alphabetical',
+                                      isActive: _sortType == 'Alphabetical',
+                                      onTap: () {
+                                        setState(
+                                          () => _sortType = 'Alphabetical',
+                                        );
+                                        sortSubcategories();
+                                      },
+                                      isDark: isDark,
+                                      screenWidth: screenWidth,
+                                      screenHeight: screenHeight,
+                                    ),
+                                    SizedBox(width: screenWidth * 0.02),
                                   ],
                                 ),
-                                child: ValueListenableBuilder<TextEditingValue>(
-                                  valueListenable: _searchController,
-                                  builder: (context, value, child) {
-                                    return TextField(
-                                      controller: _searchController,
-                                      onChanged: filterSubcategories,
-                                      decoration: InputDecoration(
-                                        hintText: 'Search Subcategories...',
-                                        hintStyle: TextStyle(
-                                          color: Colors.grey[400],
-                                        ),
-                                        prefixIcon: Icon(
-                                          Icons.search,
-                                          color: Colors.grey[400],
-                                        ),
-                                        suffixIcon: value.text.isNotEmpty
-                                            ? IconButton(
-                                                icon: Icon(
-                                                  Icons.close,
-                                                  color: Colors.grey[400],
-                                                ),
-                                                onPressed: clearSearch,
-                                              )
-                                            : null,
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: horizontalPadding,
-                                          vertical: screenHeight * 0.02,
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                SizedBox(
+                                  height: viewInsets.bottom > 0
+                                      ? viewInsets.bottom
+                                      : 0,
                                 ),
-                              ),
-                              SizedBox(height: screenHeight * 0.02),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  SortButton(
-                                    label: 'None',
-                                    isActive: _sortType == 'Products',
-                                    onTap: () {
-                                      setState(() => _sortType = 'Products');
-                                      sortSubcategories();
-                                    },
-                                    isDark: isDark,
-                                    screenWidth: screenWidth,
-                                    screenHeight: screenHeight,
-                                  ),
-                                  SizedBox(width: screenWidth * 0.02),
-                                  SortButton(
-                                    label: 'Sort: Alphabetical',
-                                    isActive: _sortType == 'Alphabetical',
-                                    onTap: () {
-                                      setState(
-                                        () => _sortType = 'Alphabetical',
-                                      );
-                                      sortSubcategories();
-                                    },
-                                    isDark: isDark,
-                                    screenWidth: screenWidth,
-                                    screenHeight: screenHeight,
-                                  ),
-                                  SizedBox(width: screenWidth * 0.02),
-                                ],
-                              ),
-                              SizedBox(
-                                height: viewInsets.bottom > 0
-                                    ? viewInsets.bottom
-                                    : 0,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -560,7 +578,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                               color: isDark ? Colors.grey[900] : Colors.white,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -777,7 +795,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                                           },
                                     icon: Icon(Icons.arrow_back_ios),
                                     color: isFirstPage
-                                        ? Colors.grey.withOpacity(0.3)
+                                        ? Colors.grey.withValues(alpha: 0.3)
                                         : isDark
                                         ? Colors.green[300]
                                         : Colors.blue,
@@ -804,7 +822,7 @@ class _SubcategoryPageState extends ConsumerState<SubcategoryPage> {
                                           },
                                     icon: Icon(Icons.arrow_forward_ios),
                                     color: isLastPage
-                                        ? Colors.grey.withOpacity(0.3)
+                                        ? Colors.grey.withValues(alpha: 0.3)
                                         : isDark
                                         ? Colors.green[300]
                                         : Colors.blue,

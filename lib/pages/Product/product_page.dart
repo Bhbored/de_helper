@@ -33,6 +33,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Product? copied;
+  List<Product>? copiedProducts;
   String sortType = 'Products';
   bool _showScrollButton = false;
   bool _isAtBottom = false;
@@ -99,18 +100,49 @@ class _ProductPageState extends ConsumerState<ProductPage> {
   @override
   Widget build(BuildContext context) {
     ref.listen(prodcutProvider, (previous, next) {
-      if (copied != null && next.value!.length < previous!.value!.length) {
-        final categoryToShow = copied!;
+      if (copied != null &&
+          previous != null &&
+          next.value != null &&
+          next.value!.length < previous.value!.length) {
+        final productToShow = copied!;
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Product "${categoryToShow.name}" deleted'),
+            content: Text('Product "${productToShow.name}" deleted'),
             action: SnackBarAction(
               label: 'Undo',
               onPressed: () async {
                 if (mounted) {
-                  await ref.read(prodcutProvider.notifier).addProduct(copied!);
                   copied = null;
+                  await ref
+                      .read(prodcutProvider.notifier)
+                      .addProduct(productToShow);
+                }
+              },
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else if (copiedProducts != null &&
+          copiedProducts!.isNotEmpty &&
+          previous != null &&
+          next.value != null &&
+          next.value!.length < previous.value!.length) {
+        final productsToShow = List<Product>.from(copiedProducts!);
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${productsToShow.length} products deleted'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () async {
+                if (mounted) {
+                  copiedProducts = null;
+                  for (var product in productsToShow) {
+                    await ref
+                        .read(prodcutProvider.notifier)
+                        .addProduct(product);
+                  }
                 }
               },
             ),
@@ -226,6 +258,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
               TextButton(
                 onPressed: () async {
                   copied = product;
+                  copiedProducts = null;
                   await ref
                       .read(prodcutProvider.notifier)
                       .deleteProduct(product.id);
@@ -268,7 +301,28 @@ class _ProductPageState extends ConsumerState<ProductPage> {
       });
     }
 
+    void toggleSelectAll(List<Product> allProducts) {
+      setState(() {
+        if (_selectedProductIds.length == allProducts.length) {
+          _selectedProductIds.clear();
+          if (_selectedProductIds.isEmpty) {
+            _isSelectionMode = false;
+          }
+        } else {
+          _selectedProductIds.clear();
+          for (var product in allProducts) {
+            _selectedProductIds.add(product.id);
+          }
+          if (!_isSelectionMode) {
+            _isSelectionMode = true;
+          }
+        }
+      });
+    }
+
     Future<void> handleDeleteSelected(List<Product> products) async {
+      copiedProducts = List<Product>.from(products);
+      copied = null;
       await ref.read(prodcutProvider.notifier).deleteSelection(products);
     }
 
@@ -339,40 +393,35 @@ class _ProductPageState extends ConsumerState<ProductPage> {
               allMeasurements: measurements,
             );
 
-            if (mounted) {
-              Navigator.of(context).pop();
-            }
+            if (context.mounted) Navigator.of(context).pop();
 
             if (filePath != null) {
               await ExcelExport.shareFile(filePath);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Products exported successfully'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
-            } else {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Failed to export products'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
-            }
-          } catch (e) {
-            if (mounted) Navigator.of(context).pop();
-            if (mounted) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error: ${e.toString()}'),
-                  duration: const Duration(seconds: 3),
+                const SnackBar(
+                  content: Text('Products exported successfully'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            } else {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Failed to export products'),
+                  duration: Duration(seconds: 2),
                 ),
               );
             }
+          } catch (e) {
+            if (context.mounted) Navigator.of(context).pop();
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${e.toString()}'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
           }
         },
         error: (error, stack) {
@@ -435,7 +484,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -486,7 +535,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                       delegate: _SelectionHeaderDelegate(
                         child: Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: horizontalPadding,
+                            horizontal: horizontalPadding - screenWidth * 0.03,
                             vertical: screenHeight * 0.015,
                           ),
                           decoration: BoxDecoration(
@@ -502,17 +551,33 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              TextButton(
-                                onPressed: exitSelectionMode,
-                                child: Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    fontSize: screenWidth * 0.04,
-                                    color: isDark
-                                        ? Colors.grey[400]
-                                        : Colors.grey[600],
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Checkbox(
+                                    value:
+                                        _selectedProductIds.length ==
+                                            data.length &&
+                                        data.isNotEmpty,
+                                    onChanged: (value) => toggleSelectAll(data),
+                                    activeColor: isDark
+                                        ? Colors.blue[300]
+                                        : Colors.blue,
+                                    checkColor: Colors.white,
                                   ),
-                                ),
+                                  TextButton(
+                                    onPressed: exitSelectionMode,
+                                    child: Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.04,
+                                        color: isDark
+                                            ? Colors.grey[400]
+                                            : Colors.grey[600],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               Flexible(
                                 child: Text(
@@ -529,14 +594,12 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                 ),
                               ),
                               Flexible(
+                                flex: 2,
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Flexible(
-                                      flex: 3,
+                                    Expanded(
                                       child: Container(
                                         height: screenHeight * 0.035,
-                                        width: screenWidth * 0.5,
                                         padding: EdgeInsets.symmetric(
                                           horizontal: screenWidth * 0.02,
                                         ),
@@ -625,7 +688,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                                           )
                                                           .toList(),
                                                       loading: () => [],
-                                                      error: (_, __) => [],
+                                                      error: (e, s) => [],
                                                     ),
                                               ],
                                               menuMaxHeight: screenHeight * 0.4,
@@ -664,7 +727,7 @@ class _ProductPageState extends ConsumerState<ProductPage> {
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: screenWidth * 0.015),
+                                    SizedBox(width: screenWidth * 0.01),
                                     ElevatedButton(
                                       onPressed: () {
                                         final selectedProducts = data

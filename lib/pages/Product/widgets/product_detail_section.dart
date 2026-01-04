@@ -26,7 +26,7 @@ class ProductDetailSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(screenWidth * 0.04),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
             spreadRadius: 0,

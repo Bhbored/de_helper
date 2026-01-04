@@ -121,7 +121,7 @@ class _SubcategoryCardState extends ConsumerState<SubcategoryCard> {
             borderRadius: BorderRadius.circular(widget.screenWidth * 0.03),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -137,7 +137,7 @@ class _SubcategoryCardState extends ConsumerState<SubcategoryCard> {
               height: iconContainerSize,
               decoration: BoxDecoration(
                 color: widget.isDark
-                    ? Colors.green[900]!.withOpacity(0.3)
+                    ? Colors.green[900]!.withValues(alpha: 0.3)
                     : Colors.blue[100],
                 borderRadius: BorderRadius.circular(widget.screenWidth * 0.025),
               ),

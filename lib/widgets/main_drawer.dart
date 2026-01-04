@@ -31,7 +31,7 @@ class MainDrawer extends StatelessWidget {
                         end: Alignment.bottomRight,
                         colors: [
                           Colors.grey[900]!,
-                          Colors.green[900]!.withOpacity(0.3),
+                          Colors.green[900]!.withValues(alpha: 0.3),
                         ],
                       )
                     : LinearGradient(
