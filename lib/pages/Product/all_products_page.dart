@@ -1,18 +1,14 @@
-import 'dart:ui';
-import 'package:de_helper/utility/theme_selector.dart';
-import 'package:de_helper/providers/category_provider.dart';
-import 'package:de_helper/providers/subcategory_provider.dart';
+import 'dart:async';
 import 'package:de_helper/providers/product_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
-import 'package:de_helper/pages/Product/product_detail_page.dart';
-import 'package:de_helper/pages/Product/widgets/product_empty_state.dart';
+import 'package:de_helper/pages/Product/widgets/all_products_header.dart';
+import 'package:de_helper/pages/Product/widgets/all_products_list.dart';
+import 'package:de_helper/pages/Product/widgets/all_products_selection_header.dart';
+import 'package:de_helper/pages/Product/widgets/product_form_bottom_sheet.dart';
 import 'package:de_helper/utility/barcode_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pluto_grid/pluto_grid.dart';
 import 'package:de_helper/models/product.dart';
-import 'package:de_helper/models/category.dart';
-import 'package:de_helper/models/subcategory.dart';
 
 class AllProductsPage extends ConsumerStatefulWidget {
   const AllProductsPage({super.key});
@@ -23,34 +19,216 @@ class AllProductsPage extends ConsumerStatefulWidget {
 
 class _AllProductsPageState extends ConsumerState<AllProductsPage> {
   final TextEditingController _searchController = TextEditingController();
-  PlutoGridStateManager? _stateManager;
-  List<Product>? _allProducts;
+  final ScrollController _scrollController = ScrollController();
+  Product? copied;
+  List<Product>? copiedProducts;
+  bool _showScrollButton = false;
+  bool _isAtBottom = false;
+  Timer? _scrollHideTimer;
+  bool _isSelectionMode = false;
+  final Set<String> _selectedProductIds = {};
+  int _currentPage = 0;
+  static const int _itemsPerPage = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    Future.delayed(const Duration(milliseconds: 100), () {
+      ref.read(prodcutProvider.notifier).refreshProduct();
+    });
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _scrollHideTimer?.cancel();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    final isAtBottom = position.pixels >= position.maxScrollExtent - 50;
+    final isAtTop = position.pixels <= 50;
+
+    setState(() {
+      _isAtBottom = isAtBottom;
+      _showScrollButton = !isAtTop;
+    });
+
+    _scrollHideTimer?.cancel();
+    _scrollHideTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        final currentPosition = _scrollController.position;
+        final currentIsAtBottom =
+            currentPosition.pixels >= currentPosition.maxScrollExtent - 50;
+        final currentIsAtTop = currentPosition.pixels <= 50;
+        setState(() {
+          _isAtBottom = currentIsAtBottom;
+          _showScrollButton = !currentIsAtTop;
+        });
+      }
+    });
+  }
+
+  void _scrollToPosition() {
+    if (_isAtBottom) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void filterProducts(String query) {
     setState(() {
-      // Filtering is now handled in the build method
+      _currentPage = 0;
+    });
+    if (query.isEmpty) {
+      ref.read(prodcutProvider.notifier).refreshProduct();
+    } else {
+      ref.read(prodcutProvider.notifier).refreshProduct().then((_) {
+        if (mounted) {
+          ref.read(prodcutProvider.notifier).filterByNameOrBarcode(query);
+        }
+      });
+    }
+  }
+
+  void clearSearch() {
+    _searchController.clear();
+    filterProducts('');
+  }
+
+  void toggleSelection(String productId) {
+    setState(() {
+      if (_selectedProductIds.contains(productId)) {
+        _selectedProductIds.remove(productId);
+        if (_selectedProductIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedProductIds.add(productId);
+        if (!_isSelectionMode) {
+          _isSelectionMode = true;
+        }
+      }
     });
   }
 
-  List<Product> _filterProducts(List<Product> allProducts, String query) {
-    if (query.isEmpty) {
-      return allProducts;
-    }
-    final queryLower = query.toLowerCase();
-    return allProducts.where((product) {
-      final nameMatch = product.name.toLowerCase().contains(queryLower);
-      final barcodeMatch =
-          product.barcode.toLowerCase().contains(queryLower) ||
-          (product.secondaryBarcode != null &&
-              product.secondaryBarcode!.toLowerCase().contains(queryLower));
-      return nameMatch || barcodeMatch;
-    }).toList();
+  void exitSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedProductIds.clear();
+    });
+  }
+
+  void toggleSelectAll(List<Product> allProducts) {
+    setState(() {
+      if (_selectedProductIds.length == allProducts.length) {
+        _selectedProductIds.clear();
+        if (_selectedProductIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedProductIds.clear();
+        for (var product in allProducts) {
+          _selectedProductIds.add(product.id);
+        }
+        if (!_isSelectionMode) {
+          _isSelectionMode = true;
+        }
+      }
+    });
+  }
+
+  Future<void> handleDeleteSelected(List<Product> products) async {
+    copiedProducts = List<Product>.from(products);
+    copied = null;
+    await ref.read(prodcutProvider.notifier).deleteSelection(products);
+    setState(() {
+      _selectedProductIds.clear();
+      _isSelectionMode = false;
+    });
+  }
+
+  Future<bool> showDeleteConfirmation(Product product) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+          title: Text(
+            'Delete Product',
+            style: TextStyle(
+              fontSize: screenWidth * 0.045,
+              color: isDark ? Colors.white : Colors.grey[900],
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete "${product.name}"?',
+            style: TextStyle(
+              fontSize: screenWidth * 0.04,
+              color: isDark ? Colors.grey[300] : Colors.grey[700],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                copied = product;
+                copiedProducts = null;
+                await ref
+                    .read(prodcutProvider.notifier)
+                    .deleteProduct(product.id);
+                if (context.mounted) {
+                  Navigator.of(context).pop(true);
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
+  void showEditProductBottomSheet(Product product) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height,
+        child: ProductFormBottomSheet(product: product),
+      ),
+    ).then((editedProduct) {
+      if (editedProduct != null) {
+        filterProducts(_searchController.text);
+      }
+    });
   }
 
   Future<void> scanBarcode() async {
@@ -61,111 +239,66 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
 
     if (barcode != null && barcode.isNotEmpty) {
       _searchController.text = barcode;
-      setState(() {
-        // Filtering is handled in build method
-      });
+      filterProducts(barcode);
     }
-  }
-
-  void clearSearch() {
-    _searchController.clear();
-    filterProducts('');
-  }
-
-  List<PlutoColumn> _buildColumns(bool isDark, double screenWidth) {
-    return [
-      PlutoColumn(
-        title: 'Name',
-        field: 'name',
-        type: PlutoColumnType.text(),
-        width: 150,
-      ),
-      PlutoColumn(
-        title: 'Category',
-        field: 'category',
-        type: PlutoColumnType.text(),
-        width: 150,
-      ),
-      PlutoColumn(
-        title: 'Subcategory',
-        field: 'subcategory',
-        type: PlutoColumnType.text(),
-        width: 160,
-      ),
-      PlutoColumn(
-        title: 'Quantity',
-        field: 'quantity',
-        type: PlutoColumnType.number(),
-        width: 130,
-      ),
-      PlutoColumn(
-        title: 'Price',
-        field: 'price',
-        type: PlutoColumnType.text(),
-        width: 130,
-      ),
-      PlutoColumn(
-        title: 'Barcode',
-        field: 'barcode',
-        type: PlutoColumnType.text(),
-        width: 160,
-      ),
-      PlutoColumn(
-        title: 'Secondary Barcode',
-        field: 'secondaryBarcode',
-        type: PlutoColumnType.text(),
-        width: 160,
-      ),
-      PlutoColumn(
-        title: 'Actions',
-        field: 'actions',
-        type: PlutoColumnType.text(),
-        width: 100,
-        enableSorting: false,
-        enableFilterMenuItem: false,
-      ),
-    ];
-  }
-
-  List<PlutoRow> _buildRows(
-    List<Product> productList,
-    List<Category> categories,
-    List<SubCategory> subcategories,
-  ) {
-    return productList.map<PlutoRow>((product) {
-      final category = categories.firstWhere(
-        (c) => c.id == product.categoryId,
-        orElse: () => categories.first,
-      );
-      final subcategory = product.subCategoryId != null
-          ? subcategories.firstWhere(
-              (s) => s.id == product.subCategoryId,
-              orElse: () => subcategories.first,
-            )
-          : null;
-
-      return PlutoRow(
-        key: ValueKey(product.id),
-        cells: {
-          'name': PlutoCell(value: product.name),
-          'category': PlutoCell(value: category.name),
-          'subcategory': PlutoCell(value: subcategory?.name ?? 'N/A'),
-          'quantity': PlutoCell(value: product.quantity),
-          'price': PlutoCell(value: '\$${product.price.toStringAsFixed(2)}'),
-          'barcode': PlutoCell(value: product.barcode),
-          'secondaryBarcode': PlutoCell(
-            value: product.secondaryBarcode ?? 'N/A',
-          ),
-          'actions': PlutoCell(value: product),
-        },
-      );
-    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final products = ref.watch(prodcutProvider);
+    ref.listen(prodcutProvider, (previous, next) {
+      if (copied != null &&
+          previous != null &&
+          next.value != null &&
+          next.value!.length < previous.value!.length) {
+        final productToShow = copied!;
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product "${productToShow.name}" deleted'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () async {
+                if (mounted) {
+                  copied = null;
+                  await ref
+                      .read(prodcutProvider.notifier)
+                      .addProduct(productToShow);
+                }
+              },
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else if (copiedProducts != null &&
+          copiedProducts!.isNotEmpty &&
+          previous != null &&
+          next.value != null &&
+          next.value!.length < previous.value!.length) {
+        final productsToShow = List<Product>.from(copiedProducts!);
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${productsToShow.length} products deleted'),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () async {
+                if (mounted) {
+                  copiedProducts = null;
+                  for (var product in productsToShow) {
+                    await ref
+                        .read(prodcutProvider.notifier)
+                        .addProduct(product);
+                  }
+                }
+              },
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    });
 
+    final products = ref.watch(prodcutProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
           _searchController.text.isEmpty &&
@@ -173,9 +306,12 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
           products.value!.isEmpty) {
         ref.read(prodcutProvider.notifier).refreshProduct();
       }
-      if (mounted) {
-        if (_searchController.text.isEmpty) {
-          ref.read(prodcutProvider.notifier).refreshProduct();
+      if (mounted && products.value != null) {
+        final totalPages = (products.value!.length / _itemsPerPage).ceil();
+        if (_currentPage >= totalPages && totalPages > 0) {
+          setState(() {
+            _currentPage = totalPages - 1;
+          });
         }
       }
     });
@@ -190,241 +326,171 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
     return PageScaffold(
       title: 'All Products',
       titleIcon: Icons.production_quantity_limits_sharp,
-      onAction: null,
-      body: products.when(
-        data: (productList) {
-          // Store the full list when search is empty (meaning we have the full list from provider)
-          if (_searchController.text.isEmpty) {
-            _allProducts = List.from(productList);
-          }
-          _allProducts ??= List.from(productList);
-
-          final categories = ref.watch(categoryProvider);
-          final subcategories = ref.watch(subcategoryProvider);
-
-          if (categories.value == null || subcategories.value == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Filter products locally based on search query
-          final filteredProducts = _filterProducts(
-            _allProducts ?? productList,
-            _searchController.text,
-          );
-
-          final totalProducts = filteredProducts.length;
-          final columns = _buildColumns(isDark, screenWidth);
-          final rows = _buildRows(
-            filteredProducts,
-            categories.value!,
-            subcategories.value!,
-          );
-
-          return Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding * 0.5,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(screenWidth * 0.03),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: isDark ? AppGradients.glassDark : AppGradients.glass,
-                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
-                        border: Border.all(
-                          color: isDark ? Colors.white10 : Colors.white24,
-                        ),
-                      ),
-                      child: Padding(
-                    padding: EdgeInsets.all(horizontalPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'All Products',
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.05,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? Colors.white : Colors.grey[900],
-                              ),
-                            ),
-                            Text(
-                              totalProducts.toString(),
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.06,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? Colors.green[300]
-                                    : Colors.blue[700],
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.grey[900]
-                                      : Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(
-                                    screenWidth * 0.025,
-                                  ),
-                                ),
-                                child: ValueListenableBuilder<TextEditingValue>(
-                                  valueListenable: _searchController,
-                                  builder: (context, value, child) {
-                                    return TextField(
-                                      controller: _searchController,
-                                      onChanged: filterProducts,
-                                      decoration: InputDecoration(
-                                        hintText: 'Search Products...',
-                                        hintStyle: TextStyle(
-                                          color: Colors.grey[400],
-                                        ),
-                                        prefixIcon: Icon(
-                                          Icons.search,
-                                          color: Colors.grey[400],
-                                        ),
-                                        suffixIcon: value.text.isNotEmpty
-                                            ? IconButton(
-                                                icon: Icon(
-                                                  Icons.close,
-                                                  color: Colors.grey[400],
-                                                ),
-                                                onPressed: clearSearch,
-                                              )
-                                            : null,
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(
-                                          horizontal: horizontalPadding * 0.5,
-                                          vertical: screenHeight * 0.015,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: screenWidth * 0.02),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.grey[900]
-                                    : Colors.grey[100],
-                                borderRadius: BorderRadius.circular(
-                                  screenWidth * 0.025,
-                                ),
-                              ),
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.qr_code_scanner,
-                                  color: isDark
-                                      ? Colors.green[300]
-                                      : Colors.blue[700],
-                                ),
-                                onPressed: scanBarcode,
-                                tooltip: 'Scan Barcode',
-                                padding: EdgeInsets.all(screenWidth * 0.03),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+      onAction: _isSelectionMode ? null : null,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(prodcutProvider);
+          ref.read(prodcutProvider.future);
+          exitSelectionMode();
+        },
+        child: products.when(
+          data: (productList) {
+            return Stack(
+              children: [
+                CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    AllProductsHeader(
+                      productCount: productList.length,
+                      searchController: _searchController,
+                      onChanged: filterProducts,
+                      onClear: clearSearch,
+                      onScanBarcode: scanBarcode,
+                      horizontalPadding: horizontalPadding,
+                      screenWidth: screenWidth,
+                      screenHeight: screenHeight,
+                      isDark: isDark,
                     ),
-                  ),
-                ),
-              ),
-              ),
-              ),
-              SizedBox(height: screenHeight * 0.02),
-              Expanded(
-                child: filteredProducts.isEmpty
-                    ? ProductEmptyState(
-                        isDark: isDark,
+                    if (_isSelectionMode && _selectedProductIds.isNotEmpty)
+                      AllProductsSelectionHeader(
+                        selectedCount: _selectedProductIds.length,
+                        totalCount: productList.length,
+                        isAllSelected:
+                            _selectedProductIds.length == productList.length &&
+                            productList.isNotEmpty,
+                        onToggleSelectAll: () => toggleSelectAll(productList),
+                        onCancel: exitSelectionMode,
+                        onDelete: () {
+                          final selectedProducts = productList
+                              .where(
+                                (product) =>
+                                    _selectedProductIds.contains(product.id),
+                              )
+                              .toList();
+                          handleDeleteSelected(selectedProducts);
+                        },
+                        horizontalPadding: horizontalPadding,
                         screenWidth: screenWidth,
                         screenHeight: screenHeight,
-                      )
-                    : PlutoGrid(
-                        mode: PlutoGridMode.multiSelect,
-                        columns: columns,
-                        rows: rows,
-                        onLoaded: (PlutoGridOnLoadedEvent event) {
-                          _stateManager = event.stateManager;
-                          _stateManager!.setSelectingMode(
-                            PlutoGridSelectingMode.row,
-                          );
-                          // Clear any default cell activation
-                          _stateManager!.clearCurrentCell();
-                          // Also clear after frame to ensure it's cleared
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (_stateManager != null && mounted) {
-                              _stateManager!.clearCurrentCell();
-                            }
+                        isDark: isDark,
+                      ),
+                    AllProductsList(
+                      products: productList,
+                      selectedProductIds: _selectedProductIds,
+                      isSelectionMode: _isSelectionMode,
+                      onToggleSelection: (productId) {
+                        setState(() {
+                          toggleSelection(productId);
+                        });
+                      },
+                      onLongPress: (productId) {
+                        if (!_isSelectionMode) {
+                          setState(() {
+                            _isSelectionMode = true;
+                            _selectedProductIds.add(productId);
                           });
-                        },
-                        onRowDoubleTap: (PlutoGridOnRowDoubleTapEvent event) {
-                          final product = event.row.cells['actions']!.value;
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ProductDetailPage(product: product),
-                            ),
-                          );
-                        },
-                        configuration: PlutoGridConfiguration(
-                          style: PlutoGridStyleConfig(
-                            gridBackgroundColor: isDark
-                                ? Colors.grey[900]!
-                                : Colors.white,
-                            borderColor: isDark
-                                ? Colors.grey[700]!
-                                : Colors.grey[300]!,
-                            activatedColor: isDark
-                                ? Colors.yellow[500]!.withValues(alpha: 0.8)
-                                : Colors.yellow[300]!,
-                            activatedBorderColor: Colors.transparent,
-                            inactivatedBorderColor: isDark
-                                ? Colors.grey[700]!
-                                : Colors.grey[300]!,
-                            checkedColor: isDark
-                                ? Colors.yellow[500]!.withValues(alpha: 0.8)
-                                : Colors.yellow[300]!,
-                            rowColor: isDark ? Colors.grey[900]! : Colors.white,
-                            oddRowColor: isDark
-                                ? Colors.grey[800]!
-                                : Colors.grey[50]!,
-                            columnTextStyle: TextStyle(
-                              color: isDark ? Colors.white : Colors.grey[900]!,
-                            ),
-                            cellTextStyle: TextStyle(
-                              color: isDark ? Colors.white : Colors.grey[900]!,
-                            ),
-                          ),
-                          columnSize: PlutoGridColumnSizeConfig(
-                            autoSizeMode: PlutoAutoSizeMode.none,
-                          ),
+                        }
+                      },
+                      onEdit: (product) => showEditProductBottomSheet(product),
+                      onDelete: (product) => showDeleteConfirmation(product),
+                      currentPage: _currentPage,
+                      itemsPerPage: _itemsPerPage,
+                      horizontalPadding: horizontalPadding,
+                    ),
+                    if (productList.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Builder(
+                          builder: (context) {
+                            final totalPages =
+                                (productList.length / _itemsPerPage).ceil();
+                            final isFirstPage = _currentPage == 0;
+                            final isLastPage = _currentPage >= totalPages - 1;
+
+                            return Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: horizontalPadding,
+                                vertical: screenHeight * 0.02,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    onPressed: isFirstPage
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _currentPage--;
+                                            });
+                                          },
+                                    icon: Icon(Icons.arrow_back_ios),
+                                    color: isFirstPage
+                                        ? Colors.grey.withValues(alpha: 0.3)
+                                        : isDark
+                                        ? Colors.green[300]
+                                        : Colors.blue,
+                                  ),
+                                  SizedBox(width: screenWidth * 0.05),
+                                  Text(
+                                    '${_currentPage + 1} of $totalPages',
+                                    style: TextStyle(
+                                      fontSize: screenWidth * 0.04,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.grey[900],
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.05),
+                                  IconButton(
+                                    onPressed: isLastPage
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              _currentPage++;
+                                            });
+                                          },
+                                    icon: Icon(Icons.arrow_forward_ios),
+                                    color: isLastPage
+                                        ? Colors.grey.withValues(alpha: 0.3)
+                                        : isDark
+                                        ? Colors.green[300]
+                                        : Colors.blue,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ),
-              ),
-            ],
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text(
-            error.toString(),
-            style: Theme.of(context).textTheme.titleMedium,
+                  ],
+                ),
+                if (_showScrollButton && !_isSelectionMode)
+                  Positioned(
+                    left: screenWidth * 0.05,
+                    bottom: screenHeight * 0.02,
+                    child: FloatingActionButton(
+                      heroTag: 'all_products_scroll_button',
+                      mini: true,
+                      onPressed: _scrollToPosition,
+                      backgroundColor: isDark ? Colors.green[700] : Colors.blue,
+                      child: Icon(
+                        _isAtBottom ? Icons.arrow_upward : Icons.arrow_downward,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+          error: (e, s) => Center(
+            child: Text(
+              e.toString(),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
+          loading: () {
+            return CircularProgressIndicator();
+          },
         ),
       ),
     );

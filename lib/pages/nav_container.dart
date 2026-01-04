@@ -75,7 +75,7 @@ class _NavContainerState extends ConsumerState<NavContainer> {
     final bottomPadding = mediaQuery.padding.bottom;
     final viewInsets = mediaQuery.viewInsets.bottom;
 
-    final navBarHeight = 70.0;
+    // final navBarHeight = 70.0;
     // final tabBarTotalHeight =
     //     navBarHeight +
     //     (viewInsets > 0
