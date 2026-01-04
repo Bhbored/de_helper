@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:de_helper/utility/theme_selector.dart';
+import 'package:de_helper/widgets/sort_button.dart';
 
 class AllProductsHeader extends StatelessWidget {
   final int productCount;
@@ -8,6 +9,10 @@ class AllProductsHeader extends StatelessWidget {
   final Function(String) onChanged;
   final VoidCallback onClear;
   final Future<void> Function() onScanBarcode;
+  final String sortType;
+  final bool priceSortAscending;
+  final VoidCallback onSortByName;
+  final VoidCallback onSortByPrice;
   final double horizontalPadding;
   final double screenWidth;
   final double screenHeight;
@@ -20,6 +25,10 @@ class AllProductsHeader extends StatelessWidget {
     required this.onChanged,
     required this.onClear,
     required this.onScanBarcode,
+    required this.sortType,
+    required this.priceSortAscending,
+    required this.onSortByName,
+    required this.onSortByPrice,
     required this.horizontalPadding,
     required this.screenWidth,
     required this.screenHeight,
@@ -38,9 +47,7 @@ class AllProductsHeader extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              gradient: isDark
-                  ? AppGradients.glassDark
-                  : AppGradients.glass,
+              gradient: isDark ? AppGradients.glassDark : AppGradients.glass,
             ),
             padding: EdgeInsets.all(horizontalPadding),
             child: Column(
@@ -51,13 +58,13 @@ class AllProductsHeader extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
-                          Icons.production_quantity_limits_sharp,
+                          Icons.propane_tank_rounded,
                           color: isDark ? Colors.white : Colors.grey[900],
                           size: screenWidth * 0.06,
                         ),
                         SizedBox(width: screenWidth * 0.02),
                         Text(
-                          'All Products',
+                          'Products count',
                           style: TextStyle(
                             fontSize: screenWidth * 0.05,
                             fontWeight: FontWeight.bold,
@@ -73,12 +80,8 @@ class AllProductsHeader extends StatelessWidget {
                         vertical: screenHeight * 0.008,
                       ),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.grey[800]
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(
-                          screenWidth * 0.02,
-                        ),
+                        color: isDark ? Colors.grey[800] : Colors.white,
+                        borderRadius: BorderRadius.circular(screenWidth * 0.02),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.05),
@@ -92,12 +95,8 @@ class AllProductsHeader extends StatelessWidget {
                         style: TextStyle(
                           fontSize: screenWidth * 0.06,
                           fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? Colors.green[300]
-                              : Colors.blue[700],
-                          fontFeatures: const [
-                            FontFeature.tabularFigures(),
-                          ],
+                          color: isDark ? Colors.green[300] : Colors.blue[700],
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                     ),
@@ -109,9 +108,7 @@ class AllProductsHeader extends StatelessWidget {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.grey[800]
-                              : Colors.white,
+                          color: isDark ? Colors.grey[800] : Colors.white,
                           borderRadius: BorderRadius.circular(
                             screenWidth * 0.03,
                           ),
@@ -131,9 +128,7 @@ class AllProductsHeader extends StatelessWidget {
                               onChanged: onChanged,
                               decoration: InputDecoration(
                                 hintText: 'Search Products...',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey[400],
-                                ),
+                                hintStyle: TextStyle(color: Colors.grey[400]),
                                 prefixIcon: Icon(
                                   Icons.search,
                                   color: Colors.grey[400],
@@ -161,12 +156,8 @@ class AllProductsHeader extends StatelessWidget {
                     SizedBox(width: screenWidth * 0.02),
                     Container(
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.grey[800]
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(
-                          screenWidth * 0.03,
-                        ),
+                        color: isDark ? Colors.grey[800] : Colors.white,
+                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.05),
@@ -178,14 +169,39 @@ class AllProductsHeader extends StatelessWidget {
                       child: IconButton(
                         icon: Icon(
                           Icons.qr_code_scanner,
-                          color: isDark
-                              ? Colors.green[300]
-                              : Colors.blue[700],
+                          color: isDark ? Colors.green[300] : Colors.blue[700],
                         ),
                         onPressed: onScanBarcode,
                         tooltip: 'Scan Barcode',
                         padding: EdgeInsets.all(screenWidth * 0.03),
                       ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: screenHeight * 0.02),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  spacing: 10,
+                  children: [
+                    SortButton(
+                      label: 'Sort: Name',
+                      isActive: sortType == 'Name',
+                      onTap: onSortByName,
+                      isDark: isDark,
+                      screenWidth: screenWidth,
+                      screenHeight: screenHeight,
+                    ),
+                    SortButton(
+                      label: sortType == 'Price'
+                          ? (priceSortAscending
+                                ? 'Sort: Price ↑'
+                                : 'Sort: Price ↓')
+                          : 'Sort: Price',
+                      isActive: sortType == 'Price',
+                      onTap: onSortByPrice,
+                      isDark: isDark,
+                      screenWidth: screenWidth,
+                      screenHeight: screenHeight,
                     ),
                   ],
                 ),

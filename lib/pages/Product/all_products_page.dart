@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:de_helper/data/repos/product_repository_impl.dart';
 import 'package:de_helper/providers/product_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:de_helper/widgets/page_scaffold.dart';
@@ -9,6 +10,7 @@ import 'package:de_helper/pages/Product/widgets/product_form_bottom_sheet.dart';
 import 'package:de_helper/utility/barcode_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:de_helper/models/product.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 class AllProductsPage extends ConsumerStatefulWidget {
   const AllProductsPage({super.key});
@@ -28,7 +30,9 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
   bool _isSelectionMode = false;
   final Set<String> _selectedProductIds = {};
   int _currentPage = 0;
-  static const int _itemsPerPage = 10;
+  int _itemsPerPage = 10;
+  String sortType = 'Name';
+  bool _priceSortAscending = true;
 
   @override
   void initState() {
@@ -89,16 +93,44 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
     }
   }
 
+  void sortProducts() {
+    final products = ref.read(prodcutProvider);
+    final sorted = products.value;
+    if (sorted == null || sorted.isEmpty) return;
+    switch (sortType) {
+      case 'Name':
+        sorted.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+        );
+        break;
+      case 'Price':
+        sorted.sort((a, b) {
+          if (_priceSortAscending) {
+            return a.price.compareTo(b.price);
+          } else {
+            return b.price.compareTo(a.price);
+          }
+        });
+        break;
+    }
+    ref.read(prodcutProvider.notifier).sortProducts(sorted);
+  }
+
   void filterProducts(String query) {
     setState(() {
       _currentPage = 0;
     });
     if (query.isEmpty) {
-      ref.read(prodcutProvider.notifier).refreshProduct();
+      ref.read(prodcutProvider.notifier).refreshProduct().then((_) {
+        if (mounted) {
+          sortProducts();
+        }
+      });
     } else {
       ref.read(prodcutProvider.notifier).refreshProduct().then((_) {
         if (mounted) {
           ref.read(prodcutProvider.notifier).filterByNameOrBarcode(query);
+          sortProducts();
         }
       });
     }
@@ -299,6 +331,7 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
     });
 
     final products = ref.watch(prodcutProvider);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
           _searchController.text.isEmpty &&
@@ -346,6 +379,25 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
                       onChanged: filterProducts,
                       onClear: clearSearch,
                       onScanBarcode: scanBarcode,
+                      sortType: sortType,
+                      priceSortAscending: _priceSortAscending,
+                      onSortByName: () {
+                        setState(() {
+                          sortType = 'Name';
+                          sortProducts();
+                        });
+                      },
+                      onSortByPrice: () {
+                        setState(() {
+                          if (sortType == 'Price') {
+                            _priceSortAscending = !_priceSortAscending;
+                          } else {
+                            sortType = 'Price';
+                            _priceSortAscending = true;
+                          }
+                          sortProducts();
+                        });
+                      },
                       horizontalPadding: horizontalPadding,
                       screenWidth: screenWidth,
                       screenHeight: screenHeight,
@@ -428,6 +480,78 @@ class _AllProductsPageState extends ConsumerState<AllProductsPage> {
                                         : isDark
                                         ? Colors.green[300]
                                         : Colors.blue,
+                                  ),
+                                  SizedBox(width: screenWidth * 0.02),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.grey[800]
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(
+                                        screenWidth * 0.025,
+                                      ),
+                                      border: Border.all(
+                                        color: isDark
+                                            ? Colors.grey[600]!
+                                            : Colors.grey[300]!,
+                                        width: 1,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.05,
+                                          ),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: screenWidth * 0.03,
+                                    ),
+                                    child: DropdownButton<int>(
+                                      value: _itemsPerPage,
+                                      underline: Container(),
+                                      icon: Icon(
+                                        Icons.arrow_drop_down,
+                                        color: isDark
+                                            ? Colors.grey[300]
+                                            : Colors.grey[700],
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: screenWidth * 0.035,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.grey[900],
+                                      ),
+                                      dropdownColor: isDark
+                                          ? Colors.grey[800]
+                                          : Colors.white,
+                                      items: [10, 50, 100].map((int value) {
+                                        return DropdownMenuItem<int>(
+                                          value: value,
+                                          child: Text(
+                                            value.toString(),
+                                            style: TextStyle(
+                                              fontSize: screenWidth * 0.035,
+                                              fontWeight: FontWeight.w600,
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : Colors.grey[900],
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (int? newValue) {
+                                        if (newValue != null) {
+                                          setState(() {
+                                            _itemsPerPage = newValue;
+                                            _currentPage = 0;
+                                          });
+                                        }
+                                      },
+                                    ),
                                   ),
                                   SizedBox(width: screenWidth * 0.05),
                                   Text(

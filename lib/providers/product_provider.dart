@@ -138,4 +138,8 @@ class ProdcutNotifier extends _$ProdcutNotifier {
       throw StateError('Error updating products: $e');
     }
   }
+
+  void sortProducts(List<Product> newList) {
+    state = AsyncValue.data(newList);
+  }
 }
